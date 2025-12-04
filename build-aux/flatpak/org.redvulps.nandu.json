@@ -18,6 +18,7 @@
     "--device=dri",
     "--socket=wayland",
     "--socket=fallback-x11",
+    "--filesystem=/run/docker.sock",
     "--env=GJS_DISABLE_JIT=1"
   ],
   "cleanup": [

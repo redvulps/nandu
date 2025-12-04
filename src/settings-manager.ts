@@ -1,4 +1,5 @@
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 
 /** Settings manager providing type-safe access to application settings. */
 export class SettingsManager {
@@ -46,7 +47,10 @@ export class SettingsManager {
     const type = this.getConnectionType();
 
     if (type === 'local') {
-      return '/var/run/docker.sock';
+      const isFlatpak = GLib.file_test('/.flatpak-info', GLib.FileTest.EXISTS);
+      const prefix = isFlatpak ? '/run' : '/var/run';
+
+      return `${prefix}/docker.sock`;
     }
 
     return this.getSocketPath();
