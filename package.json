@@ -1,0 +1,32 @@
+{
+  "name": "nandu",
+  "version": "0.1.0",
+  "description": "Template for writing GNOME applications in TypeScript",
+  "main": "src/main.ts",
+  "repository": "https://github.com/redvulps/nandu",
+  "author": "Fabio Pereira <fabio@fabiopereira.dev>",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "typescript": "^5.1.0"
+  },
+  "devDependencies": {
+    "@ts-for-gir/cli": "^4.0.0-beta.38",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "eslint": "^9.16.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "prettier": "^3.4.2",
+    "typescript-eslint": "^8.18.0"
+  },
+  "scripts": {
+    "build": "tsc --strict",
+    "typecheck": "tsc --strict --noEmit",
+    "start": "./scripts/start.sh",
+    "update:types": "./scripts/generate-types.sh",
+    "reset-settings": "dconf reset -f /org/redvulps/nandu/",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  }
+}

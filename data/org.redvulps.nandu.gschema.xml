@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="nandu">
+	<schema id="org.redvulps.nandu" path="/org/redvulps/nandu/">
+		<key name="setup-complete" type="b">
+			<default>false</default>
+			<summary>Setup completed</summary>
+			<description>Whether the initial setup has been completed</description>
+		</key>
+		<key name="connection-type" type="s">
+			<default>'local'</default>
+			<summary>Docker connection type</summary>
+			<description>Type of Docker connection: 'local' for default socket or 'custom' for user-specified path</description>
+		</key>
+		<key name="socket-path" type="s">
+			<default>'/var/run/docker.sock'</default>
+			<summary>Docker socket path</summary>
+			<description>Path to Docker Unix socket or remote connection string</description>
+		</key>
+	</schema>
+</schemalist>

@@ -1,0 +1,58 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Cambalache 0.96.3 -->
+<interface>
+  <!-- interface-name compose-item.ui -->
+  <requires lib="gtk" version="4.18"/>
+  <template class="NanduComposeItem" parent="GtkBox">
+    <property name="orientation">vertical</property>
+    <child>
+      <object class="GtkBox">
+        <property name="margin-bottom">8</property>
+        <property name="margin-end">12</property>
+        <property name="margin-start">12</property>
+        <property name="margin-top">8</property>
+        <property name="orientation">horizontal</property>
+        <property name="spacing">12</property>
+        <child>
+          <object class="GtkImage">
+            <property name="icon-name">folder-symbolic</property>
+            <property name="pixel-size">16</property>
+            <property name="valign">center</property>
+            <style>
+              <class name="dim-label"/>
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="projectNameLabel">
+            <property name="hexpand">True</property>
+            <property name="label">Project Name</property>
+            <property name="valign">center</property>
+            <property name="xalign">0</property>
+            <style>
+              <class name="heading"/>
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="statusLabel">
+            <property name="label">0/0 running</property>
+            <style>
+              <class name="caption"/>
+              <class name="dim-label"/>
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="GtkImage">
+            <property name="icon-name">go-next-symbolic</property>
+            <property name="valign">center</property>
+            <style>
+              <class name="dim-label"/>
+            </style>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

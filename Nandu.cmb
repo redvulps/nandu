@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<!DOCTYPE cambalache-project SYSTEM "cambalache-project.dtd">
+<!-- Created with Cambalache 0.96.3 -->
+<cambalache-project version="0.96.0" target_tk="gtk-4.0">
+  <gresources filename="data/org.redvulps.nandu.data.gresource.xml" sha256="a4f0db5d5468e1e964e46d87221806e9c80665f90055ab466afc931c2eda9032"/>
+  <ui template-class="NanduComposeItem" filename="data/compose-item.ui" sha256="a1071a668f5711300d43d51f304bba0b18fcfe6b485ced1d534c447c75d3f29b"/>
+  <ui template-class="NanduContainerItem" filename="data/container-item.ui" sha256="3a92833d397e2635e4e03431ea736066826fb57f7c1bf134a8ff8849703e7ce3"/>
+  <ui template-class="NanduSetupDialog" filename="data/setup-dialog.ui" sha256="ac80dcbb35bd8879207b5c45362ff844c5a5533114b727e69ff32f8cb4fb5771"/>
+  <ui template-class="NanduWindow" filename="data/window.ui" sha256="7fee73b0f280a953fc2af9b13917a03c3d701979822e2802d9be726bffb054cd"/>
+  <ui template-class="NanduContainerManager" filename="data/container-manager.ui" sha256="1073aca9a90c69b858cdd3378a26afb18446e2ded3722df272579905d75bab5b"/>
+  <ui template-class="NanduComposeDetail" filename="data/compose-detail.ui" sha256="58ea24d420695f750e9366f9cf326aa54df0fe93c8550fdab539c2689744b098"/>
+</cambalache-project>

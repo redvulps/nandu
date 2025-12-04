@@ -1,0 +1,91 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Cambalache 0.96.3 -->
+<interface>
+  <!-- interface-name setup-dialog.ui -->
+  <requires lib="gtk" version="4.18"/>
+  <requires lib="libadwaita" version="1.5"/>
+  <template class="NanduSetupDialog" parent="AdwDialog">
+    <property name="content-height">300</property>
+    <property name="content-width">500</property>
+    <property name="title">_Welcome to Nandu</property>
+    <child>
+      <object class="AdwToolbarView">
+        <property name="content">
+          <object class="GtkBox">
+            <property name="margin-bottom">24</property>
+            <property name="margin-end">24</property>
+            <property name="margin-start">24</property>
+            <property name="margin-top">24</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">24</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="justify">center</property>
+                <property name="label">To get started, choose how you want to connect to Docker:</property>
+                <property name="wrap">True</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <property name="spacing">12</property>
+                <child>
+                  <object class="GtkCheckButton" id="localRadio">
+                    <property name="active">True</property>
+                    <property name="label">Local (Default Socket)</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">Use the default Docker socket at /var/run/docker.sock</property>
+                    <property name="margin-start">24</property>
+                    <property name="wrap">True</property>
+                    <property name="xalign">0</property>
+                    <style>
+                      <class name="dim-label"/>
+                      <class name="caption"/>
+                    </style>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="customRadio">
+                    <property name="group">localRadio</property>
+                    <property name="label">Custom Socket Path</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="customPathEntry">
+                    <property name="margin-start">24</property>
+                    <property name="placeholder-text">/var/run/docker.sock</property>
+                    <property name="sensitive">False</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel" id="statusLabel">
+                <property name="justify">center</property>
+                <property name="label">statusLabel</property>
+                <property name="visible">False</property>
+                <property name="wrap">True</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="connectButton">
+                <property name="halign">center</property>
+                <property name="label">_Connect and Continue</property>
+                <style>
+                  <class name="pill"/>
+                  <class name="suggested-action"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </property>
+        <child type="top">
+          <object class="AdwHeaderBar"/>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

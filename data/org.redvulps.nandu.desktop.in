@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Nandu
+Exec=org.redvulps.nandu
+Icon=org.redvulps.nandu
+Terminal=false
+Type=Application
+Categories=GTK;
+StartupNotify=true

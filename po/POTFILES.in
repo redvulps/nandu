@@ -1,0 +1,6 @@
+data/org.redvulps.nandu.desktop.in
+data/org.redvulps.nandu.metainfo.xml.in
+data/org.redvulps.nandu.gschema.xml
+data/window.ui
+src/main.ts
+src/window.ts
