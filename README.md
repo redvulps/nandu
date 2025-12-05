@@ -40,6 +40,14 @@ Nandu is a native Linux application that provides a beautiful, intuitive interfa
   - **Custom**: Specify a custom socket path or remote Docker host
 - **Native GNOME Experience**: Built with GTK4 and libadwaita for a seamless Linux desktop experience
 
+## Why Nandu instead of Docker Desktop on Linux?
+
+Docker Desktop for Linux runs its own virtual machine and uses a separate Docker context. That means it starts an extra Docker engine, keeps its own set of images and containers, and adds another always-on background service on top of the native tools you already have installed.
+
+Nandu takes a different approach: it is a native GTK4 application that connects directly to your existing Docker Engine (or other compatible runtimes) through the Docker socket. No extra VM, no hidden daemon, no duplicated context – just a lightweight UI over the containers you already manage from the CLI.
+
+On top of that, Nandu is released under a permissive open source license, with no commercial Desktop subscription requirements. Docker CE on Linux remains free, but Docker Desktop requires a paid per-user subscription for commercial use in larger companies. With Nandu, you keep the freedom of the Linux Docker ecosystem while getting a modern, integrated GNOME experience.
+
 ## Current Status
 
 🚧 **Active Development** - Nandu is functional and actively developed. Core container management features are implemented, including:
