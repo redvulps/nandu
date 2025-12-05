@@ -7,7 +7,7 @@
   <ui template-class="NanduComposeDetail" filename="data/compose-detail.ui" sha256="ce4492d2440a304546543e81f17b8582acb2e92817b044f3e71cb86f45593e80"/>
   <ui template-class="NanduComposeItem" filename="data/compose-item.ui" sha256="cd72d038d545d8aad3e668e1fcf4b67926134b9abab263cb325cc5acc3d57c31"/>
   <ui template-class="NanduContainerItem" filename="data/container-item.ui" sha256="1b0a0b426aa7c26fd1620f9c4a99e68625e7a929c616dc8c0692d107cae2c240"/>
-  <ui template-class="NanduContainerManager" filename="data/container-manager.ui" sha256="e6331a2aa175f4e1064b8f1af271e8e278f878357b3564361adc267dd4aea7d4"/>
+  <ui template-class="NanduContainerManager" filename="data/container-manager.ui" sha256="b4dd18704a4207dd8e795bed58d78081b1f42294da455eea74c3acde0099bdd7"/>
   <ui template-class="NanduSetupDialog" filename="data/setup-dialog.ui" sha256="ac80dcbb35bd8879207b5c45362ff844c5a5533114b727e69ff32f8cb4fb5771"/>
   <ui template-class="NanduWindow" filename="data/dialogs/main/main-dialog.ui" sha256="fc2e9bd29ea71046329393ca75731000efabdfa5f0a06744e456a18096fe9d58">
     <css-provider>data/styles.css</css-provider>

@@ -12,7 +12,10 @@ import {
   ContainerNetworkData,
   getNetworkData,
 } from '../../../docker/container/network.js';
-import { getMountsData, ContainerMount } from '../../../docker/container/mounts.js';
+import {
+  getMountsData,
+  ContainerMount,
+} from '../../../docker/container/mounts.js';
 import {
   ContainerDiskUsage,
   getDiskUsageData,
@@ -190,6 +193,14 @@ export class ContainerManager extends Adw.Window {
     deleteAction.connect('activate', () => this.handleDelete());
     actionGroup.add_action(deleteAction);
 
+    const copyLogsAction = Gio.SimpleAction.new('copy-logs', null);
+    copyLogsAction.connect('activate', () => this.copyLogs());
+    actionGroup.add_action(copyLogsAction);
+
+    const saveLogsAction = Gio.SimpleAction.new('save-logs', null);
+    saveLogsAction.connect('activate', () => this.saveLogs());
+    actionGroup.add_action(saveLogsAction);
+
     this.insert_action_group('container', actionGroup);
   }
 
@@ -351,6 +362,62 @@ export class ContainerManager extends Adw.Window {
     } finally {
       this._refreshLogButton.set_sensitive(true);
     }
+  }
+
+  /**
+   * Copies the current logs to the clipboard.
+   */
+  private copyLogs(): void {
+    const buffer = this._logView.get_buffer();
+    const [start, end] = buffer.get_bounds();
+    const text = buffer.get_text(start, end, false);
+    this.copyToClipboard(text);
+  }
+
+  /**
+   * Saves the current logs to a user-selected file.
+   */
+  private saveLogs(): void {
+    const dialog = new Gtk.FileChooserNative({
+      title: 'Save Logs',
+      transient_for: this,
+      action: Gtk.FileChooserAction.SAVE,
+      accept_label: 'Save',
+      cancel_label: 'Cancel',
+      modal: true,
+    });
+
+    const filter = new Gtk.FileFilter();
+    filter.add_pattern('*.txt');
+    filter.set_name('Text Files');
+    dialog.add_filter(filter);
+
+    dialog.connect('response', (_dialog, response) => {
+      if (response === Gtk.ResponseType.ACCEPT) {
+        const file = dialog.get_file();
+        if (file) {
+          const buffer = this._logView.get_buffer();
+          const [start, end] = buffer.get_bounds();
+          const text = buffer.get_text(start, end, false);
+
+          try {
+            const bytes = new TextEncoder().encode(text);
+            file.replace_contents(
+              bytes,
+              null,
+              false,
+              Gio.FileCreateFlags.NONE,
+              null
+            );
+          } catch (error) {
+            this.showErrorDialog('Failed to Save Logs', String(error));
+          }
+        }
+      }
+      dialog.destroy();
+    });
+
+    dialog.show();
   }
 
   /**

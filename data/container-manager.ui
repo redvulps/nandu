@@ -363,29 +363,51 @@
                     <property name="orientation">vertical</property>
                     <property name="spacing">12</property>
                     <child>
-                      <object class="GtkBox">
-                        <property name="spacing">12</property>
-                        <child>
-                          <object class="GtkButton" id="refreshLogButton">
-                            <property name="icon-name">view-refresh-symbolic</property>
-                            <property name="tooltip-text">Refresh Logs</property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkScrolledWindow">
-                        <property name="hexpand">True</property>
+                      <object class="GtkOverlay">
                         <property name="vexpand">True</property>
                         <child>
-                          <object class="GtkTextView" id="logView">
-                            <property name="bottom-margin">8</property>
-                            <property name="editable">False</property>
-                            <property name="left-margin">8</property>
-                            <property name="monospace">True</property>
-                            <property name="right-margin">8</property>
-                            <property name="top-margin">8</property>
-                            <property name="wrap-mode">word-char</property>
+                          <object class="GtkScrolledWindow">
+                            <property name="hexpand">True</property>
+                            <property name="vexpand">True</property>
+                            <child>
+                              <object class="GtkTextView" id="logView">
+                                <property name="bottom-margin">8</property>
+                                <property name="editable">False</property>
+                                <property name="left-margin">8</property>
+                                <property name="monospace">True</property>
+                                <property name="right-margin">8</property>
+                                <property name="top-margin">8</property>
+                                <property name="wrap-mode">word-char</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child type="overlay">
+                          <object class="GtkBox">
+                            <property name="halign">end</property>
+                            <property name="margin-end">12</property>
+                            <property name="margin-top">12</property>
+                            <property name="spacing">6</property>
+                            <property name="valign">start</property>
+                            <child>
+                              <object class="GtkMenuButton" id="logMenuButton">
+                                <property name="icon-name">view-more-symbolic</property>
+                                <property name="menu-model">log_menu</property>
+                                <property name="tooltip-text">Log Actions</property>
+                                <style>
+                                  <class name="osd"/>
+                                </style>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkButton" id="refreshLogButton">
+                                <property name="icon-name">view-refresh-symbolic</property>
+                                <property name="tooltip-text">Refresh Logs</property>
+                                <style>
+                                  <class name="osd"/>
+                                </style>
+                              </object>
+                            </child>
                           </object>
                         </child>
                       </object>
@@ -425,6 +447,18 @@
       <item>
         <attribute name="action">container.delete</attribute>
         <attribute name="label">Delete</attribute>
+      </item>
+    </section>
+  </menu>
+  <menu id="log_menu">
+    <section>
+      <item>
+        <attribute name="action">container.copy-logs</attribute>
+        <attribute name="label">Copy</attribute>
+      </item>
+      <item>
+        <attribute name="action">container.save-logs</attribute>
+        <attribute name="label">Save As…</attribute>
       </item>
     </section>
   </menu>
