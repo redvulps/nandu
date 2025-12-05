@@ -1,4 +1,5 @@
 import Adw from 'gi://Adw';
+import Gdk from 'gi://Gdk?version=4.0';
 import Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk?version=4.0';
@@ -23,6 +24,8 @@ export class Application extends Adw.Application {
       application_id: 'org.redvulps.nandu',
       flags: Gio.ApplicationFlags.DEFAULT_FLAGS,
     });
+
+    this.loadStyles();
 
     const quitAction = new Gio.SimpleAction({ name: 'quit' });
     quitAction.connect('activate', () => {
@@ -95,6 +98,20 @@ export class Application extends Adw.Application {
 
       dialog.present(null);
     });
+  }
+
+  private loadStyles(): void {
+    const cssProvider = new Gtk.CssProvider();
+    cssProvider.load_from_resource('/org/redvulps/nandu/styles.css');
+
+    const display = Gdk.Display.get_default();
+    if (display) {
+      Gtk.StyleContext.add_provider_for_display(
+        display,
+        cssProvider,
+        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+      );
+    }
   }
 
   private showMainWindow(): void {

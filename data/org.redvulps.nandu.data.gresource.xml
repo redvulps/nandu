@@ -2,6 +2,7 @@
 <!-- Created with Cambalache 0.96.3 -->
 <gresources>
   <gresource prefix="/org/redvulps/nandu">
+    <file>styles.css</file>
     <file preprocess="xml-stripblanks">dialogs/main/main-dialog.ui</file>
     <file preprocess="xml-stripblanks">setup-dialog.ui</file>
     <file preprocess="xml-stripblanks">container-item.ui</file>

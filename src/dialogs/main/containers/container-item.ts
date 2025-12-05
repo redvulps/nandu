@@ -97,15 +97,25 @@ export class ContainerItem extends Gtk.Box {
     this._imageLabel.set_label(this._containerInfo.image);
     this._statusLabel.set_label(this._containerInfo.status);
 
-    if (this._containerInfo.isRunning) {
-      this._statusIcon.set_from_icon_name('media-playback-start-symbolic');
-      this._statusIcon.remove_css_class('error');
-      this._statusIcon.add_css_class('success');
-    } else {
-      this._statusIcon.set_from_icon_name('media-playback-stop-symbolic');
-      this._statusIcon.remove_css_class('success');
-      this._statusIcon.add_css_class('error');
-    }
+    // Apply state-based styling to the icon
+    const state = this._containerInfo.state.toLowerCase();
+    const stateClasses = ['success', 'error', 'warning', 'accent'];
+    stateClasses.forEach((c) => this._statusIcon.remove_css_class(c));
+
+    const stateToClass: Record<string, string> = {
+      running: 'success',
+      paused: 'warning',
+      created: 'accent',
+      restarting: 'accent',
+    };
+
+    this._statusIcon.add_css_class(stateToClass[state] ?? 'error');
+
+    this._statusIcon.set_from_icon_name(
+      this._containerInfo.isRunning
+        ? 'media-playback-start-symbolic'
+        : 'media-playback-stop-symbolic'
+    );
 
     if (this._containerInfo.isCompose) {
       this._composeBadge.set_visible(true);
