@@ -2,15 +2,20 @@
  * Nandu - Centralized Styles
  */
 
-.nandu-list-item {
-  transition: background-color 150ms ease-in-out;
-  border-radius: 6px;
-}
-
-.nandu-list-item:hover {
-  background-color: alpha(currentColor, 0.05);
+ :root {
+  --alpha-default: 0.05;
+  --alpha-strong: 0.08;
+  --padding: 16px;
+  --radius: 8px;
 }
 
 .nandu-list-item button.flat:hover {
-  background-color: alpha(currentColor, 0.08);
+  background-color: alpha(currentColor, var(--alpha-strong));
+}
+
+.nandu-titlebar-box {
+  background-color: alpha(currentColor, var(--alpha-default));
+  padding-left: var(--padding);
+  padding-right: var(--padding);
+  border-radius: var(--radius);
 }

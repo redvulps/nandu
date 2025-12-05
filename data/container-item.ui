@@ -10,9 +10,6 @@
     <property name="margin-top">8</property>
     <property name="orientation">horizontal</property>
     <property name="spacing">12</property>
-    <style>
-      <class name="nandu-list-item"/>
-    </style>
     <child>
       <object class="GtkBox">
         <property name="orientation">vertical</property>
@@ -149,5 +146,8 @@
         </child>
       </object>
     </child>
+    <style>
+      <class name="nandu-list-item"/>
+    </style>
   </template>
 </interface>

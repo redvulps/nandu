@@ -28,6 +28,8 @@ export class MainDialog extends Adw.ApplicationWindow {
   private _searchButton!: Gtk.ToggleButton;
   private _titleStack!: Gtk.Stack;
   private _windowTitle!: Adw.WindowTitle;
+  private _currentSidebarPageIcon!: Gtk.Image;
+  private _currentHostOrSocket!: Gtk.Label;
 
   private dockerClient: DockerClient | null = null;
   private settings: SettingsManager;
@@ -61,6 +63,8 @@ export class MainDialog extends Adw.ApplicationWindow {
           'searchButton',
           'titleStack',
           'windowTitle',
+          'currentSidebarPageIcon',
+          'currentHostOrSocket',
         ],
       },
       this
@@ -79,6 +83,8 @@ export class MainDialog extends Adw.ApplicationWindow {
 
     this.setupPages();
     this.setupActions();
+
+    this._currentHostOrSocket.set_label(this.settings.getEffectiveSocketPath());
 
     this._sidebarListBox.connect('row-selected', (_listBox, row) => {
       if (!row) {
@@ -189,6 +195,14 @@ export class MainDialog extends Adw.ApplicationWindow {
     this.setSearchMode(false);
     this._backButton.set_visible(false);
     this.currentComposeDetail = null;
+
+    const box = row.get_child() as Gtk.Box;
+    const image = box?.get_first_child() as Gtk.Image;
+
+    if (image && image instanceof Gtk.Image) {
+      this._currentSidebarPageIcon.set_from_icon_name(image.icon_name);
+    }
+
     if (row === this._containersRow) {
       this._contentStack.set_visible_child_name('containers');
       this.setPageTitle('Containers');

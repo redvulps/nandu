@@ -1,5 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Cambalache 0.96.3 -->
 <interface>
+  <!-- interface-name main-dialog.ui -->
   <requires lib="gio" version="2.0"/>
   <requires lib="gtk" version="4.18"/>
   <requires lib="libadwaita" version="1.4"/>
@@ -9,12 +11,203 @@
     <property name="title">Nandu</property>
     <child>
       <object class="AdwNavigationSplitView" id="splitView">
+        <property name="content">
+          <object class="AdwNavigationPage" id="contentPage">
+            <property name="child">
+              <object class="AdwToolbarView">
+                <property name="content">
+                  <object class="GtkStack" id="contentStack">
+                    <property name="transition-type">crossfade</property>
+                  </object>
+                </property>
+                <child type="top">
+                  <object class="AdwHeaderBar">
+                    <child type="start">
+                      <object class="GtkButton" id="backButton">
+                        <property name="icon-name">go-previous-symbolic</property>
+                        <property name="tooltip-text">Back</property>
+                        <property name="visible">False</property>
+                      </object>
+                    </child>
+                    <child type="title">
+                      <object class="GtkStack" id="titleStack">
+                        <property name="transition-type">crossfade</property>
+                        <child>
+                          <object class="GtkStackPage">
+                            <property name="child">
+                              <object class="GtkBox">
+                                <child>
+                                  <object class="GtkImage" id="currentSidebarPageIcon">
+                                    <property name="icon-name">system-run-symbolic</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="AdwWindowTitle" id="windowTitle">
+                                    <property name="title">Containers</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="currentHostOrSocket">
+                                    <property name="label">/var/run/docker/sock</property>
+                                  </object>
+                                </child>
+                                <style>
+                                  <class name="nandu-titlebar-box"/>
+                                </style>
+                              </object>
+                            </property>
+                            <property name="name">title</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkStackPage">
+                            <property name="child">
+                              <object class="GtkSearchEntry" id="searchEntry">
+                                <property name="hexpand">True</property>
+                                <property name="max-width-chars">40</property>
+                                <property name="placeholder-text">Search...</property>
+                              </object>
+                            </property>
+                            <property name="name">search</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child type="end">
+                      <object class="GtkButton" id="refreshButton">
+                        <property name="icon-name">view-refresh-symbolic</property>
+                        <property name="tooltip-text">Refresh</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </property>
+            <property name="title">Containers</property>
+          </object>
+        </property>
         <property name="show-content">True</property>
         <property name="sidebar">
           <object class="AdwNavigationPage">
-            <property name="title">Nandu</property>
             <property name="child">
               <object class="AdwToolbarView">
+                <property name="content">
+                  <object class="GtkScrolledWindow">
+                    <property name="hscrollbar-policy">never</property>
+                    <child>
+                      <object class="GtkListBox" id="sidebarListBox">
+                        <property name="selection-mode">single</property>
+                        <child>
+                          <object class="GtkListBoxRow" id="containersRow">
+                            <property name="child">
+                              <object class="GtkBox">
+                                <property name="margin-bottom">8</property>
+                                <property name="margin-end">12</property>
+                                <property name="margin-start">12</property>
+                                <property name="margin-top">8</property>
+                                <property name="orientation">horizontal</property>
+                                <property name="spacing">12</property>
+                                <child>
+                                  <object class="GtkImage">
+                                    <property name="icon-name">system-run-symbolic</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="hexpand">True</property>
+                                    <property name="label">Containers</property>
+                                    <property name="xalign">0</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkListBoxRow" id="imagesRow">
+                            <property name="child">
+                              <object class="GtkBox">
+                                <property name="margin-bottom">8</property>
+                                <property name="margin-end">12</property>
+                                <property name="margin-start">12</property>
+                                <property name="margin-top">8</property>
+                                <property name="orientation">horizontal</property>
+                                <property name="spacing">12</property>
+                                <child>
+                                  <object class="GtkImage">
+                                    <property name="icon-name">drive-harddisk-symbolic</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="hexpand">True</property>
+                                    <property name="label">Images</property>
+                                    <property name="xalign">0</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkListBoxRow" id="networksRow">
+                            <property name="child">
+                              <object class="GtkBox">
+                                <property name="margin-bottom">8</property>
+                                <property name="margin-end">12</property>
+                                <property name="margin-start">12</property>
+                                <property name="margin-top">8</property>
+                                <property name="orientation">horizontal</property>
+                                <property name="spacing">12</property>
+                                <child>
+                                  <object class="GtkImage">
+                                    <property name="icon-name">network-workgroup-symbolic</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="hexpand">True</property>
+                                    <property name="label">Networks</property>
+                                    <property name="xalign">0</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkListBoxRow" id="volumesRow">
+                            <property name="child">
+                              <object class="GtkBox">
+                                <property name="margin-bottom">8</property>
+                                <property name="margin-end">12</property>
+                                <property name="margin-start">12</property>
+                                <property name="margin-top">8</property>
+                                <property name="orientation">horizontal</property>
+                                <property name="spacing">12</property>
+                                <child>
+                                  <object class="GtkImage">
+                                    <property name="icon-name">drive-multidisk-symbolic</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="hexpand">True</property>
+                                    <property name="label">Volumes</property>
+                                    <property name="xalign">0</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </property>
+                          </object>
+                        </child>
+                        <style>
+                          <class name="navigation-sidebar"/>
+                        </style>
+                      </object>
+                    </child>
+                  </object>
+                </property>
                 <child type="top">
                   <object class="AdwHeaderBar">
                     <child type="start">
@@ -32,183 +225,9 @@
                     </child>
                   </object>
                 </child>
-                <property name="content">
-                  <object class="GtkScrolledWindow">
-                    <property name="hscrollbar-policy">never</property>
-                    <child>
-                      <object class="GtkListBox" id="sidebarListBox">
-                        <property name="selection-mode">single</property>
-                        <style>
-                          <class name="navigation-sidebar"/>
-                        </style>
-                        <child>
-                          <object class="GtkListBoxRow" id="containersRow">
-                            <property name="child">
-                              <object class="GtkBox">
-                                <property name="orientation">horizontal</property>
-                                <property name="spacing">12</property>
-                                <property name="margin-start">12</property>
-                                <property name="margin-end">12</property>
-                                <property name="margin-top">8</property>
-                                <property name="margin-bottom">8</property>
-                                <child>
-                                  <object class="GtkImage">
-                                    <property name="icon-name">system-run-symbolic</property>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel">
-                                    <property name="label">Containers</property>
-                                    <property name="hexpand">True</property>
-                                    <property name="xalign">0</property>
-                                  </object>
-                                </child>
-                              </object>
-                            </property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkListBoxRow" id="imagesRow">
-                            <property name="child">
-                              <object class="GtkBox">
-                                <property name="orientation">horizontal</property>
-                                <property name="spacing">12</property>
-                                <property name="margin-start">12</property>
-                                <property name="margin-end">12</property>
-                                <property name="margin-top">8</property>
-                                <property name="margin-bottom">8</property>
-                                <child>
-                                  <object class="GtkImage">
-                                    <property name="icon-name">drive-harddisk-symbolic</property>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel">
-                                    <property name="label">Images</property>
-                                    <property name="hexpand">True</property>
-                                    <property name="xalign">0</property>
-                                  </object>
-                                </child>
-                              </object>
-                            </property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkListBoxRow" id="networksRow">
-                            <property name="child">
-                              <object class="GtkBox">
-                                <property name="orientation">horizontal</property>
-                                <property name="spacing">12</property>
-                                <property name="margin-start">12</property>
-                                <property name="margin-end">12</property>
-                                <property name="margin-top">8</property>
-                                <property name="margin-bottom">8</property>
-                                <child>
-                                  <object class="GtkImage">
-                                    <property name="icon-name">network-workgroup-symbolic</property>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel">
-                                    <property name="label">Networks</property>
-                                    <property name="hexpand">True</property>
-                                    <property name="xalign">0</property>
-                                  </object>
-                                </child>
-                              </object>
-                            </property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkListBoxRow" id="volumesRow">
-                            <property name="child">
-                              <object class="GtkBox">
-                                <property name="orientation">horizontal</property>
-                                <property name="spacing">12</property>
-                                <property name="margin-start">12</property>
-                                <property name="margin-end">12</property>
-                                <property name="margin-top">8</property>
-                                <property name="margin-bottom">8</property>
-                                <child>
-                                  <object class="GtkImage">
-                                    <property name="icon-name">drive-multidisk-symbolic</property>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel">
-                                    <property name="label">Volumes</property>
-                                    <property name="hexpand">True</property>
-                                    <property name="xalign">0</property>
-                                  </object>
-                                </child>
-                              </object>
-                            </property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                </property>
               </object>
             </property>
-          </object>
-        </property>
-        <property name="content">
-          <object class="AdwNavigationPage" id="contentPage">
-            <property name="title">Containers</property>
-            <property name="child">
-              <object class="AdwToolbarView">
-                <child type="top">
-                  <object class="AdwHeaderBar">
-                    <child type="start">
-                      <object class="GtkButton" id="backButton">
-                        <property name="icon-name">go-previous-symbolic</property>
-                        <property name="tooltip-text">Back</property>
-                        <property name="visible">False</property>
-                      </object>
-                    </child>
-                    <child type="title">
-                      <object class="GtkStack" id="titleStack">
-                        <property name="transition-type">crossfade</property>
-                        <child>
-                          <object class="GtkStackPage">
-                            <property name="name">title</property>
-                            <property name="child">
-                              <object class="AdwWindowTitle" id="windowTitle">
-                                <property name="title">Containers</property>
-                              </object>
-                            </property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkStackPage">
-                            <property name="name">search</property>
-                            <property name="child">
-                              <object class="GtkSearchEntry" id="searchEntry">
-                                <property name="hexpand">True</property>
-                                <property name="max-width-chars">40</property>
-                                <property name="placeholder-text">Search...</property>
-                              </object>
-                            </property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child type="end">
-                      <object class="GtkButton" id="refreshButton">
-                        <property name="icon-name">view-refresh-symbolic</property>
-                        <property name="tooltip-text">Refresh</property>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-                <property name="content">
-                  <object class="GtkStack" id="contentStack">
-                    <property name="transition-type">crossfade</property>
-                  </object>
-                </property>
-              </object>
-            </property>
+            <property name="title">Nandu</property>
           </object>
         </property>
       </object>

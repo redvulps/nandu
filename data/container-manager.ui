@@ -3,6 +3,7 @@
 <interface>
   <!-- interface-name container-manager.ui -->
   <requires lib="adw" version="1.0"/>
+  <requires lib="gio" version="2.0"/>
   <requires lib="gtk" version="4.0"/>
   <requires lib="libadwaita" version="1.7"/>
   <template class="NanduContainerManager" parent="AdwWindow">

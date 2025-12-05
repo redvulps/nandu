@@ -25,8 +25,6 @@ export class Application extends Adw.Application {
       flags: Gio.ApplicationFlags.DEFAULT_FLAGS,
     });
 
-    this.loadStyles();
-
     const quitAction = new Gio.SimpleAction({ name: 'quit' });
     quitAction.connect('activate', () => {
       this.quit();
@@ -55,9 +53,14 @@ export class Application extends Adw.Application {
     Gio._promisify(Gtk.UriLauncher.prototype, 'launch', 'launch_finish');
   }
 
+  public vfunc_startup(): void {
+    super.vfunc_startup();
+    this.loadStyles();
+  }
+
   public vfunc_activate(): void {
     this.activateAsync().catch((e) => {
-      console.error(`Error during activation: ${e}`);
+      console.error(`Error during activation: ${String(e)}`);
       this.quit();
     });
   }
@@ -73,7 +76,7 @@ export class Application extends Adw.Application {
         this.showMainWindow();
       }
     } catch (e) {
-      console.error(`Failed to activate application: ${e}`);
+      console.error(`Failed to activate application: ${String(e)}`);
       this.quit();
     } finally {
       this.release();
@@ -111,6 +114,8 @@ export class Application extends Adw.Application {
         cssProvider,
         Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
       );
+    } else {
+      console.error('Failed to get default display for style loading');
     }
   }
 
