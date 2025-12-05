@@ -36,7 +36,7 @@ export class Application extends Adw.Application {
     const aboutAction = new Gio.SimpleAction({ name: 'about' });
     aboutAction.connect('activate', () => {
       const aboutDialog = new Adw.AboutDialog({
-        application_name: _('Nandu'),
+        application_name: 'Nandu',
         application_icon: 'org.redvulps.nandu',
         developer_name: 'Fabio Pereira',
         version: '0.1',

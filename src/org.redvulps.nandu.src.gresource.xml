@@ -8,17 +8,22 @@
     <file>dialogs/main/containers/compose-item.js</file>
     <file>dialogs/main/containers/container-item.js</file>
     <file>dialogs/main/containers/container-manager.js</file>
+    <file>dialogs/main/containers/containers-page.js</file>
+    <file>dialogs/main/images/images-page.js</file>
+    <file>dialogs/main/networks/networks-page.js</file>
+    <file>dialogs/main/volumes/volumes-page.js</file>
     <file>dialogs/setup/setup-dialog.js</file>
+    <file>docker/connection.js</file>
     <file>docker/client.js</file>
     <file>docker/types.js</file>
+    <file>docker/container/summary.js</file>
+    <file>docker/container/network.js</file>
+    <file>docker/container/mounts.js</file>
     <file>docker/container/disk-usage.js</file>
     <file>docker/container/logs.js</file>
     <file>docker/container/monitor.js</file>
-    <file>docker/container/mounts.js</file>
-    <file>docker/container/network.js</file>
-    <file>docker/container/summary.js</file>
     <file>models/container-info.js</file>
-    <file>utils/formatDate.js</file>
     <file>utils/formatBytes.js</file>
+    <file>utils/formatDate.js</file>
   </gresource>
 </gresources>

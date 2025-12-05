@@ -1,43 +1,24 @@
-import Adw from 'gi://Adw';
-import Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk?version=4.0';
 
 import { ContainerItem } from './container-item.js';
-import { DockerClient } from '../../../docker/client.js';
 import { ContainerInfo } from '../../../models/container-info.js';
 
-/** Navigation page that displays containers within a compose project. */
-export class ComposeDetail extends Adw.NavigationPage {
+/** Widget that displays containers within a compose project. */
+export class ComposeDetail extends Gtk.Box {
   private _projectTitleLabel!: Gtk.Label;
-  private _projectTitleHeaderLabel!: Gtk.Label;
   private _containerListBox!: Gtk.ListBox;
-  private _headerBar!: Adw.HeaderBar;
-  private _searchEntry!: Gtk.SearchEntry;
 
   private projectName: string;
-  private dockerClient: DockerClient;
   private containers: ContainerInfo[] = [];
   private searchQuery = '';
 
   static {
-    const template = 'resource:///org/redvulps/nandu/compose-detail.ui';
-    Gio.resources_lookup_data(
-      '/org/redvulps/nandu/compose-detail.ui',
-      Gio.ResourceLookupFlags.NONE
-    );
-
     GObject.registerClass(
       {
         GTypeName: 'NanduComposeDetail',
-        Template: template,
-        InternalChildren: [
-          'projectTitleLabel',
-          'projectTitleHeaderLabel',
-          'containerListBox',
-          'headerBar',
-          'searchEntry',
-        ],
+        Template: 'resource:///org/redvulps/nandu/compose-detail.ui',
+        InternalChildren: ['projectTitleLabel', 'containerListBox'],
         Signals: {
           'container-action': {
             param_types: [GObject.TYPE_STRING, GObject.TYPE_STRING],
@@ -48,25 +29,13 @@ export class ComposeDetail extends Adw.NavigationPage {
     );
   }
 
-  constructor(
-    projectName: string,
-    dockerClient: DockerClient,
-    containers: ContainerInfo[]
-  ) {
+  constructor(projectName: string, containers: ContainerInfo[]) {
     super();
 
     this.projectName = projectName;
-    this.dockerClient = dockerClient;
     this.containers = containers;
 
-    this.set_title(projectName);
     this._projectTitleLabel.set_label(projectName);
-    this._projectTitleHeaderLabel.set_label(projectName);
-
-    this._searchEntry.connect('search-changed', () => {
-      this.searchQuery = this._searchEntry.get_text().toLowerCase();
-      this._containerListBox.invalidate_filter();
-    });
 
     this._containerListBox.set_filter_func((row) => {
       if (!this.searchQuery) {
@@ -81,7 +50,9 @@ export class ComposeDetail extends Adw.NavigationPage {
           return false;
         }
 
-        const searchableText = [info.name].join(' ').toLowerCase();
+        const searchableText = [info.name, info.composeService]
+          .join(' ')
+          .toLowerCase();
 
         return searchableText.includes(this.searchQuery);
       }
@@ -92,8 +63,13 @@ export class ComposeDetail extends Adw.NavigationPage {
     this.populateContainers();
   }
 
-  public toggleSearch(): void {
-    this._searchEntry.grab_focus();
+  public getProjectName(): string {
+    return this.projectName;
+  }
+
+  public setSearchQuery(query: string): void {
+    this.searchQuery = query.toLowerCase();
+    this._containerListBox.invalidate_filter();
   }
 
   private populateContainers(): void {

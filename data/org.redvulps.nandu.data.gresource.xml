@@ -2,12 +2,16 @@
 <!-- Created with Cambalache 0.96.3 -->
 <gresources>
   <gresource prefix="/org/redvulps/nandu">
-    <file preprocess="xml-stripblanks">window.ui</file>
+    <file preprocess="xml-stripblanks">dialogs/main/main-dialog.ui</file>
     <file preprocess="xml-stripblanks">setup-dialog.ui</file>
     <file preprocess="xml-stripblanks">container-item.ui</file>
     <file preprocess="xml-stripblanks">compose-item.ui</file>
     <file preprocess="xml-stripblanks">compose-detail.ui</file>
     <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
     <file preprocess="xml-stripblanks">container-manager.ui</file>
+    <file preprocess="xml-stripblanks">dialogs/main/containers/containers-page.ui</file>
+    <file preprocess="xml-stripblanks">dialogs/main/images/images-page.ui</file>
+    <file preprocess="xml-stripblanks">dialogs/main/networks/networks-page.ui</file>
+    <file preprocess="xml-stripblanks">dialogs/main/volumes/volumes-page.ui</file>
   </gresource>
 </gresources>
