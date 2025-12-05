@@ -2,7 +2,7 @@
 <!DOCTYPE cambalache-project SYSTEM "cambalache-project.dtd">
 <!-- Created with Cambalache 0.96.3 -->
 <cambalache-project version="0.96.0" target_tk="gtk-4.0">
-  <gresources filename="data/org.redvulps.nandu.data.gresource.xml" sha256="2dbef9c22c935bf931fe209d861561077edf6a4403bf45a6832231428f972c1c"/>
+  <gresources filename="data/org.redvulps.nandu.data.gresource.xml" sha256="092cc9775b95bc46271ed87d2a9d97919009d700142a2863d1df1956e52fc84c"/>
   <css filename="data/styles.css"/>
   <ui template-class="NanduComposeDetail" filename="data/compose-detail.ui" sha256="ce4492d2440a304546543e81f17b8582acb2e92817b044f3e71cb86f45593e80"/>
   <ui template-class="NanduComposeItem" filename="data/compose-item.ui" sha256="cd72d038d545d8aad3e668e1fcf4b67926134b9abab263cb325cc5acc3d57c31"/>
@@ -13,7 +13,8 @@
     <css-provider>data/styles.css</css-provider>
   </ui>
   <ui template-class="NanduContainersPage" filename="data/dialogs/main/containers/containers-page.ui" sha256="dd2d4743036b30df1d26776f86a026e77e65ace7c572c610c69c3e1684697004"/>
-  <ui template-class="NanduImagesPage" filename="data/dialogs/main/images/images-page.ui" sha256="7015a4861ac3071c7453bc4219f56cb8ae75f088ace5c82fc42e7a48d2410b1c"/>
+  <ui template-class="NanduImageItem" filename="data/image-item.ui" sha256="1c5657925bd1ecbf634f6064c1e82f87a2e5e61aef7b056e797e523dd890d8ce"/>
+  <ui template-class="NanduImagesPage" filename="data/dialogs/main/images/images-page.ui" sha256="44f1d8027ea220cb46834bd042236b85b35f0a00c72832b65994e0c0b76dd391"/>
   <ui template-class="NanduNetworksPage" filename="data/dialogs/main/networks/networks-page.ui" sha256="82d781eaaafb5f2ea0f46d73cc703693d32358920a1b9131d1ddd735301a519c"/>
   <ui template-class="NanduVolumesPage" filename="data/dialogs/main/volumes/volumes-page.ui" sha256="8568abb8cdc1008a1edb8bc249b3bd4945595f3eb1449d20f6b2b3501c45a93c"/>
 </cambalache-project>

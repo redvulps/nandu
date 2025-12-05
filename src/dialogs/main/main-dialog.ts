@@ -34,6 +34,7 @@ export class MainDialog extends Adw.ApplicationWindow {
   private dockerClient: DockerClient | null = null;
   private settings: SettingsManager;
   private containersPage: ContainersPage | null = null;
+  private imagesPage: ImagesPage | null = null;
   private currentComposeDetail: ComposeDetail | null = null;
 
   static {
@@ -94,9 +95,7 @@ export class MainDialog extends Adw.ApplicationWindow {
     });
 
     this._refreshButton.connect('clicked', () => {
-      if (this.containersPage) {
-        void this.containersPage.loadContainers();
-      }
+      this.handleRefresh();
     });
 
     this._backButton.connect('clicked', () => {
@@ -105,11 +104,14 @@ export class MainDialog extends Adw.ApplicationWindow {
 
     this._searchEntry.connect('search-changed', () => {
       const query = this._searchEntry.get_text();
+      const currentPage = this._contentStack.get_visible_child_name();
 
       if (this.currentComposeDetail) {
         this.currentComposeDetail.setSearchQuery(query);
-      } else if (this.containersPage) {
+      } else if (currentPage === 'containers' && this.containersPage) {
         this.containersPage.setSearchQuery(query);
+      } else if (currentPage === 'images' && this.imagesPage) {
+        this.imagesPage.setSearchQuery(query);
       }
     });
 
@@ -154,15 +156,26 @@ export class MainDialog extends Adw.ApplicationWindow {
     );
     this._contentStack.add_named(this.containersPage, 'containers');
 
-    // Create and add other pages
-    const imagesPage = new ImagesPage();
-    this._contentStack.add_named(imagesPage, 'images');
+    // Create and add images page
+    this.imagesPage = new ImagesPage();
+    this.imagesPage.setDockerClient(this.dockerClient);
+    this._contentStack.add_named(this.imagesPage, 'images');
 
     const networksPage = new NetworksPage();
     this._contentStack.add_named(networksPage, 'networks');
 
     const volumesPage = new VolumesPage();
     this._contentStack.add_named(volumesPage, 'volumes');
+  }
+
+  private handleRefresh(): void {
+    const currentPage = this._contentStack.get_visible_child_name();
+
+    if (currentPage === 'containers' && this.containersPage) {
+      void this.containersPage.loadContainers();
+    } else if (currentPage === 'images' && this.imagesPage) {
+      void this.imagesPage.loadImages();
+    }
   }
 
   private setupActions(): void {

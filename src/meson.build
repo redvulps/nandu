@@ -9,6 +9,7 @@ sources = files(
   'dialogs/main/containers/container-item.ts',
   'dialogs/main/containers/container-manager.ts',
   'dialogs/main/containers/containers-page.ts',
+  'dialogs/main/images/image-item.ts',
   'dialogs/main/images/images-page.ts',
   'dialogs/main/networks/networks-page.ts',
   'dialogs/main/volumes/volumes-page.ts',
@@ -23,8 +24,10 @@ sources = files(
   'docker/container/network.ts',
   'docker/container/summary.ts',
   'models/container-info.ts',
+  'models/image-info.ts',
   'utils/formatDate.ts',
   'utils/formatBytes.ts',
+  'utils/truncateId.ts',
 )
 
 tsc_out = meson.project_build_root() / 'tsc-out'
