@@ -2,14 +2,13 @@
 <gresources>
   <gresource prefix="/org/redvulps/nandu/js">
     <file>main.js</file>
-    <file>window.js</file>
-    <file>compose-item.js</file>
-    <file>compose-detail.js</file>
-    <file>container-item.js</file>
-    <file>container-manager.js</file>
     <file>settings-manager.js</file>
-    <file>setup-dialog.js</file>
-    <file>docker/connection.js</file>
+    <file>dialogs/main/main-dialog.js</file>
+    <file>dialogs/main/containers/compose-detail.js</file>
+    <file>dialogs/main/containers/compose-item.js</file>
+    <file>dialogs/main/containers/container-item.js</file>
+    <file>dialogs/main/containers/container-manager.js</file>
+    <file>dialogs/setup/setup-dialog.js</file>
     <file>docker/client.js</file>
     <file>docker/types.js</file>
     <file>docker/container/disk-usage.js</file>

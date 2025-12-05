@@ -3,22 +3,22 @@ import Gtk from 'gi://Gtk?version=4.0';
 import Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
 
-import { DockerClient } from './docker/client.js';
+import { DockerClient } from '../../../docker/client.js';
 import {
   ContainerSummary,
   getSummaryData,
-} from './docker/container/summary.js';
+} from '../../../docker/container/summary.js';
 import {
   ContainerNetworkData,
   getNetworkData,
-} from './docker/container/network.js';
-import { getMountsData, ContainerMount } from './docker/container/mounts.js';
+} from '../../../docker/container/network.js';
+import { getMountsData, ContainerMount } from '../../../docker/container/mounts.js';
 import {
   ContainerDiskUsage,
   getDiskUsageData,
-} from './docker/container/disk-usage.js';
-import { getContainerLogs } from './docker/container/logs.js';
-import { monitorUntilStartedOrExited } from './docker/container/monitor.js';
+} from '../../../docker/container/disk-usage.js';
+import { getContainerLogs } from '../../../docker/container/logs.js';
+import { monitorUntilStartedOrExited } from '../../../docker/container/monitor.js';
 
 /**
  * A window class that manages and displays detailed information about a Docker container.

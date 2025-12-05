@@ -2,8 +2,8 @@ import Adw from 'gi://Adw';
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk?version=4.0';
 
-import { DockerClient } from './docker/client.js';
-import { SettingsManager } from './settings-manager.js';
+import { DockerClient } from '../../docker/client.js';
+import { SettingsManager } from '../../settings-manager.js';
 
 /** First-run dialog for configuring Docker connection. */
 export class SetupDialog extends Adw.Dialog {

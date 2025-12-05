@@ -4,8 +4,8 @@ import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk?version=4.0';
 
 import { ContainerItem } from './container-item.js';
-import { DockerClient } from './docker/client.js';
-import { ContainerInfo } from './models/container-info.js';
+import { DockerClient } from '../../../docker/client.js';
+import { ContainerInfo } from '../../../models/container-info.js';
 
 /** Navigation page that displays containers within a compose project. */
 export class ComposeDetail extends Adw.NavigationPage {

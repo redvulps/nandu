@@ -3,16 +3,16 @@ import Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk?version=4.0';
 
-import { Window } from './window.js';
+import { MainDialog } from './dialogs/main/main-dialog.js';
 import { SettingsManager } from './settings-manager.js';
-import { SetupDialog } from './setup-dialog.js';
+import { SetupDialog } from './dialogs/setup/setup-dialog.js';
 
 /**
  * Main application class for Nandu.
  * Handles application lifecycle, actions, and window management.
  */
 export class Application extends Adw.Application {
-  private window?: Window;
+  private window?: MainDialog;
 
   static {
     GObject.registerClass(this);
@@ -99,7 +99,7 @@ export class Application extends Adw.Application {
 
   private showMainWindow(): void {
     if (!this.window) {
-      this.window = new Window({ application: this });
+      this.window = new MainDialog({ application: this });
     }
 
     this.window.present();

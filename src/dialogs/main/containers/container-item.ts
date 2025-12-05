@@ -1,7 +1,7 @@
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk?version=4.0';
 
-import { ContainerInfo } from './models/container-info.js';
+import { ContainerInfo } from '../../../models/container-info.js';
 
 /** Custom widget that displays container information and handles user actions. */
 export class ContainerItem extends Gtk.Box {

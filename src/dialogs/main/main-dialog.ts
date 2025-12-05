@@ -3,17 +3,17 @@ import Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk?version=4.0';
 
-import { ComposeDetail } from './compose-detail.js';
-import { ComposeItem } from './compose-item.js';
-import { ContainerItem } from './container-item.js';
-import { ContainerManager } from './container-manager.js';
-import { DockerClient } from './docker/client.js';
-import type { ContainerData } from './docker/types.js';
-import { ContainerInfo } from './models/container-info.js';
-import { SettingsManager } from './settings-manager.js';
+import { ComposeDetail } from './containers/compose-detail.js';
+import { ComposeItem } from './containers/compose-item.js';
+import { ContainerItem } from './containers/container-item.js';
+import { ContainerManager } from './containers/container-manager.js';
+import { DockerClient } from '../../docker/client.js';
+import type { ContainerData } from '../../docker/types.js';
+import { ContainerInfo } from '../../models/container-info.js';
+import { SettingsManager } from '../../settings-manager.js';
 
 /** Main application window that manages Docker containers and compose projects. */
-export class Window extends Adw.ApplicationWindow {
+export class MainDialog extends Adw.ApplicationWindow {
   private _contentStack!: Gtk.Stack;
   private _containerListBox!: Gtk.ListBox;
   private _refreshButton!: Gtk.Button;
