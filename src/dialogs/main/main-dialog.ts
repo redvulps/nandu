@@ -7,6 +7,7 @@ import { ContainersPage } from './containers/containers-page.js';
 import { ContainerManager } from './containers/container-manager.js';
 import { ComposeDetail } from './containers/compose-detail.js';
 import { ImagesPage } from './images/images-page.js';
+import { ImageDetail } from './images/image-detail.js';
 import { NetworksPage } from './networks/networks-page.js';
 import { VolumesPage } from './volumes/volumes-page.js';
 import { DockerClient } from '../../docker/client.js';
@@ -34,7 +35,9 @@ export class MainDialog extends Adw.ApplicationWindow {
   private dockerClient: DockerClient | null = null;
   private settings: SettingsManager;
   private containersPage: ContainersPage | null = null;
+  private imagesPage: ImagesPage | null = null;
   private currentComposeDetail: ComposeDetail | null = null;
+  private currentImageDetail: ImageDetail | null = null;
 
   static {
     const template =
@@ -94,9 +97,7 @@ export class MainDialog extends Adw.ApplicationWindow {
     });
 
     this._refreshButton.connect('clicked', () => {
-      if (this.containersPage) {
-        void this.containersPage.loadContainers();
-      }
+      this.handleRefresh();
     });
 
     this._backButton.connect('clicked', () => {
@@ -105,11 +106,14 @@ export class MainDialog extends Adw.ApplicationWindow {
 
     this._searchEntry.connect('search-changed', () => {
       const query = this._searchEntry.get_text();
+      const currentPage = this._contentStack.get_visible_child_name();
 
       if (this.currentComposeDetail) {
         this.currentComposeDetail.setSearchQuery(query);
-      } else if (this.containersPage) {
+      } else if (currentPage === 'containers' && this.containersPage) {
         this.containersPage.setSearchQuery(query);
+      } else if (currentPage === 'images' && this.imagesPage) {
+        this.imagesPage.setSearchQuery(query);
       }
     });
 
@@ -154,15 +158,32 @@ export class MainDialog extends Adw.ApplicationWindow {
     );
     this._contentStack.add_named(this.containersPage, 'containers');
 
-    // Create and add other pages
-    const imagesPage = new ImagesPage();
-    this._contentStack.add_named(imagesPage, 'images');
+    // Create and add images page
+    this.imagesPage = new ImagesPage();
+    this.imagesPage.setDockerClient(this.dockerClient);
+    this.imagesPage.connect(
+      'open-inspect',
+      (_page, imageId: string, imageName: string) => {
+        this.openImageDetail(imageId, imageName);
+      }
+    );
+    this._contentStack.add_named(this.imagesPage, 'images');
 
     const networksPage = new NetworksPage();
     this._contentStack.add_named(networksPage, 'networks');
 
     const volumesPage = new VolumesPage();
     this._contentStack.add_named(volumesPage, 'volumes');
+  }
+
+  private handleRefresh(): void {
+    const currentPage = this._contentStack.get_visible_child_name();
+
+    if (currentPage === 'containers' && this.containersPage) {
+      void this.containersPage.loadContainers();
+    } else if (currentPage === 'images' && this.imagesPage) {
+      void this.imagesPage.loadImages();
+    }
   }
 
   private setupActions(): void {
@@ -195,6 +216,7 @@ export class MainDialog extends Adw.ApplicationWindow {
     this.setSearchMode(false);
     this._backButton.set_visible(false);
     this.currentComposeDetail = null;
+    this.currentImageDetail = null;
 
     const box = row.get_child() as Gtk.Box;
     const image = box?.get_first_child() as Gtk.Image;
@@ -259,10 +281,33 @@ export class MainDialog extends Adw.ApplicationWindow {
 
   private navigateBack(): void {
     this.setSearchMode(false);
-    this._contentStack.set_visible_child_name('containers');
-    this.setPageTitle('Containers');
+
+    if (this.currentComposeDetail) {
+      this._contentStack.set_visible_child_name('containers');
+      this.setPageTitle('Containers');
+      this.currentComposeDetail = null;
+    } else if (this.currentImageDetail) {
+      this._contentStack.set_visible_child_name('images');
+      this.setPageTitle('Images');
+      this.currentImageDetail = null;
+    }
+
     this._backButton.set_visible(false);
-    this.currentComposeDetail = null;
+  }
+
+  private openImageDetail(imageId: string, imageName: string): void {
+    if (!this.dockerClient) {
+      return;
+    }
+
+    const detail = new ImageDetail(this.dockerClient, imageId, imageName);
+
+    this._contentStack.add_named(detail, `image-${imageId}`);
+    this._contentStack.set_visible_child_name(`image-${imageId}`);
+    this.setSearchMode(false);
+    this.setPageTitle(imageName);
+    this._backButton.set_visible(true);
+    this.currentImageDetail = detail;
   }
 
   public vfunc_show(): void {

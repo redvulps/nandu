@@ -5,7 +5,11 @@ import type {
   ContainerData,
   ComposeInfo,
   DockerSystemDfResponse,
+  DockerImage,
+  DockerImageInspect,
+  ImageData,
 } from './types.js';
+import { truncateId } from '../utils/truncateId.js';
 
 /**
  * DockerClient provides high-level access to Docker API functionality.
@@ -136,6 +140,92 @@ export class DockerClient {
     } catch (error) {
       throw new Error(`Failed to get system data usage: ${error}`);
     }
+  }
+
+  /**
+   * List all Docker images
+   * @returns Array of processed image data
+   */
+  public async listImages(): Promise<ImageData[]> {
+    try {
+      const response = await this.connection.request('GET', '/images/json');
+      const images: DockerImage[] = JSON.parse(response);
+      return images.map((image) => this.processImage(image));
+    } catch (error) {
+      throw new Error(`Failed to list images: ${error}`);
+    }
+  }
+
+  /**
+   * Remove an image
+   * @param id Image ID or name
+   * @param force Force removal even if image is in use
+   */
+  public async removeImage(id: string, force = false): Promise<void> {
+    try {
+      const query = force ? '?force=true' : '';
+      await this.connection.request('DELETE', `/images/${id}${query}`);
+    } catch (error) {
+      throw new Error(`Failed to remove image ${id}: ${error}`);
+    }
+  }
+
+  /**
+   * Inspect a specific image
+   * @param id Image ID or name
+   * @returns Detailed image information
+   */
+  public async inspectImage(id: string): Promise<DockerImageInspect> {
+    try {
+      const response = await this.connection.request(
+        'GET',
+        `/images/${id}/json`
+      );
+      return JSON.parse(response);
+    } catch (error) {
+      throw new Error(`Failed to inspect image ${id}: ${error}`);
+    }
+  }
+
+  /**
+   * Process raw image data into UI-friendly format
+   */
+  private processImage(image: DockerImage): ImageData {
+    const repoTags = image.RepoTags ?? [];
+    const firstTag = repoTags[0] ?? '<none>:<none>';
+    const [name, tag] = this.parseRepoTag(firstTag);
+
+    return {
+      id: image.Id,
+      shortId: truncateId(image.Id),
+      name,
+      tag,
+      repoTags,
+      size: image.Size,
+      created: image.Created,
+      inUse: image.Containers > 0,
+      containerCount: image.Containers,
+    };
+  }
+
+  /**
+   * Parse a repo:tag string into separate name and tag
+   */
+  private parseRepoTag(repoTag: string): [string, string] {
+    if (repoTag === '<none>:<none>') {
+      return ['<none>', '<none>'];
+    }
+
+    // Handle images with registry and port (e.g., localhost:5000/image:tag)
+    const lastColon = repoTag.lastIndexOf(':');
+    const lastSlash = repoTag.lastIndexOf('/');
+
+    // If the colon is before the last slash, there's no tag (just registry:port)
+    if (lastColon <= lastSlash) {
+      return [repoTag, 'latest'];
+    }
+
+    return [repoTag.slice(0, lastColon), repoTag.slice(lastColon + 1)];
   }
 
   /**

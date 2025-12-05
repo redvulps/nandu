@@ -1,0 +1,149 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Cambalache 0.96.3 -->
+<interface>
+  <!-- interface-name image-item.ui -->
+  <requires lib="gio" version="2.0"/>
+  <requires lib="gtk" version="4.18"/>
+  <template class="NanduImageItem" parent="GtkBox">
+    <property name="margin-bottom">8</property>
+    <property name="margin-end">12</property>
+    <property name="margin-start">12</property>
+    <property name="margin-top">8</property>
+    <property name="orientation">horizontal</property>
+    <property name="spacing">12</property>
+    <child>
+      <object class="GtkImage">
+        <property name="icon-name">drive-harddisk-symbolic</property>
+        <property name="pixel-size">16</property>
+        <property name="valign">center</property>
+        <style>
+          <class name="dim-label"/>
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkBox">
+        <property name="hexpand">True</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">4</property>
+        <property name="valign">center</property>
+        <child>
+          <object class="GtkBox">
+            <property name="spacing">8</property>
+            <child>
+              <object class="GtkLabel" id="nameLabel">
+                <property name="ellipsize">end</property>
+                <property name="label">Image Name</property>
+                <property name="xalign">0</property>
+                <style>
+                  <class name="heading"/>
+                </style>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel" id="tagLabel">
+                <property name="label">latest</property>
+                <property name="xalign">0</property>
+                <style>
+                  <class name="caption"/>
+                  <class name="accent"/>
+                </style>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox" id="inUseBadge">
+                <property name="spacing">4</property>
+                <property name="visible">False</property>
+                <child>
+                  <object class="GtkImage">
+                    <property name="icon-name">emblem-ok-symbolic</property>
+                    <property name="pixel-size">12</property>
+                    <style>
+                      <class name="success"/>
+                    </style>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="spacing">4</property>
+            <child>
+              <object class="GtkLabel" id="idLabel">
+                <property name="ellipsize">end</property>
+                <property name="label">sha256:abc123</property>
+                <property name="xalign">0</property>
+                <style>
+                  <class name="caption"/>
+                  <class name="dim-label"/>
+                </style>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="label">In Use</property>
+                <style>
+                  <class name="caption"/>
+                  <class name="success"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkLabel" id="sizeLabel">
+        <property name="label">100 MB</property>
+        <property name="valign">center</property>
+        <style>
+          <class name="caption"/>
+          <class name="dim-label"/>
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkBox">
+        <property name="spacing">6</property>
+        <property name="valign">center</property>
+        <child>
+          <object class="GtkSpinner" id="actionSpinner">
+            <property name="spinning">True</property>
+            <property name="visible">False</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkMenuButton" id="actionsMenuButton">
+            <property name="icon-name">view-more-symbolic</property>
+            <property name="menu-model">image_actions_menu</property>
+            <property name="tooltip-text">Image Actions</property>
+            <property name="visible">True</property>
+            <style>
+              <class name="flat"/>
+              <class name="circular"/>
+            </style>
+          </object>
+        </child>
+      </object>
+    </child>
+    <style>
+      <class name="nandu-list-item"/>
+    </style>
+  </template>
+  <menu id="image_actions_menu">
+    <section>
+      <item>
+        <attribute name="action">image.inspect</attribute>
+        <attribute name="label">Inspect</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name="action">image.delete</attribute>
+        <attribute name="label">Delete</attribute>
+      </item>
+    </section>
+  </menu>
+</interface>

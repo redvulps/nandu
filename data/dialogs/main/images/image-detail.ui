@@ -1,0 +1,192 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Cambalache 0.96.3 -->
+<interface>
+  <!-- interface-name image-detail.ui -->
+  <requires lib="gtk" version="4.18"/>
+  <requires lib="libadwaita" version="1.4"/>
+  <template class="NanduImageDetail" parent="GtkBox">
+    <property name="orientation">vertical</property>
+    <child>
+      <object class="GtkStack" id="contentStack">
+        <property name="vexpand">True</property>
+        <child>
+          <object class="GtkStackPage">
+            <property name="child">
+              <object class="GtkBox">
+                <property name="halign">center</property>
+                <property name="valign">center</property>
+                <property name="vexpand">True</property>
+                <child>
+                  <object class="GtkSpinner">
+                    <property name="height-request">32</property>
+                    <property name="spinning">True</property>
+                    <property name="width-request">32</property>
+                  </object>
+                </child>
+              </object>
+            </property>
+            <property name="name">loading</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkStackPage">
+            <property name="child">
+              <object class="GtkScrolledWindow">
+                <property name="hscrollbar-policy">never</property>
+                <property name="vexpand">True</property>
+                <child>
+                  <object class="AdwClamp">
+                    <property name="maximum-size">800</property>
+                    <property name="tightening-threshold">600</property>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="margin-bottom">12</property>
+                        <property name="margin-end">12</property>
+                        <property name="margin-start">12</property>
+                        <property name="margin-top">12</property>
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">12</property>
+                        <child>
+                          <object class="GtkLabel" id="imageTitleLabel">
+                            <property name="ellipsize">end</property>
+                            <property name="label">Image Name</property>
+                            <property name="xalign">0</property>
+                            <style>
+                              <class name="title-1"/>
+                            </style>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkListBox">
+                            <property name="selection-mode">none</property>
+                            <child>
+                              <object class="AdwActionRow" id="idRow">
+                                <property name="subtitle-selectable">True</property>
+                                <property name="title">ID</property>
+                                <child type="suffix">
+                                  <object class="GtkButton" id="copyIdButton">
+                                    <property name="icon-name">edit-copy-symbolic</property>
+                                    <property name="tooltip-text">Copy ID</property>
+                                    <property name="valign">center</property>
+                                    <style>
+                                      <class name="flat"/>
+                                    </style>
+                                  </object>
+                                </child>
+                                <style>
+                                  <class name="property"/>
+                                </style>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwActionRow" id="tagsRow">
+                                <property name="subtitle-selectable">True</property>
+                                <property name="title">Tags</property>
+                                <style>
+                                  <class name="property"/>
+                                </style>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwActionRow" id="sizeRow">
+                                <property name="subtitle-selectable">True</property>
+                                <property name="title">Size</property>
+                                <style>
+                                  <class name="property"/>
+                                </style>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwActionRow" id="createdRow">
+                                <property name="subtitle-selectable">True</property>
+                                <property name="title">Created</property>
+                                <style>
+                                  <class name="property"/>
+                                </style>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwActionRow" id="architectureRow">
+                                <property name="subtitle-selectable">True</property>
+                                <property name="title">Architecture</property>
+                                <style>
+                                  <class name="property"/>
+                                </style>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwActionRow" id="osRow">
+                                <property name="subtitle-selectable">True</property>
+                                <property name="title">OS</property>
+                                <style>
+                                  <class name="property"/>
+                                </style>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwActionRow" id="layersRow">
+                                <property name="subtitle-selectable">True</property>
+                                <property name="title">Layers</property>
+                                <style>
+                                  <class name="property"/>
+                                </style>
+                              </object>
+                            </child>
+                            <style>
+                              <class name="boxed-list"/>
+                            </style>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkExpander" id="labelsExpander">
+                            <property name="label">Labels</property>
+                            <property name="visible">False</property>
+                            <child>
+                              <object class="GtkListBox" id="labelsListBox">
+                                <property name="selection-mode">none</property>
+                                <style>
+                                  <class name="nandu-expander-list-content"/>
+                                </style>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkExpander" id="envExpander">
+                            <property name="label">Environment Variables</property>
+                            <property name="visible">False</property>
+                            <child>
+                              <object class="GtkListBox" id="envListBox">
+                                <property name="selection-mode">none</property>
+                                <style>
+                                  <class name="nandu-expander-list-content"/>
+                                </style>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </property>
+            <property name="name">content</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkStackPage">
+            <property name="child">
+              <object class="AdwStatusPage" id="errorPage">
+                <property name="icon-name">dialog-error-symbolic</property>
+                <property name="title">Failed to Load Image</property>
+                <property name="vexpand">True</property>
+              </object>
+            </property>
+            <property name="name">error</property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
