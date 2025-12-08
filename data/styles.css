@@ -2,11 +2,12 @@
  * Nandu - Centralized Styles
  */
 
- :root {
+:root {
   --alpha-default: 0.05;
   --alpha-strong: 0.08;
   --padding: 16px;
-  --radius: 8px;
+  --radius: 16px;
+  --stack-gap: 8px;
 }
 
 .nandu-list-item button.flat:hover {
@@ -17,5 +18,10 @@
   background-color: alpha(currentColor, var(--alpha-default));
   padding-left: var(--padding);
   padding-right: var(--padding);
+  border-radius: var(--radius);
+}
+
+.nandu-expander-list-content {
+  margin-top: var(--stack-gap);
   border-radius: var(--radius);
 }

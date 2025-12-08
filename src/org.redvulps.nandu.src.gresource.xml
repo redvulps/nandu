@@ -9,7 +9,9 @@
     <file>dialogs/main/containers/container-item.js</file>
     <file>dialogs/main/containers/container-manager.js</file>
     <file>dialogs/main/containers/containers-page.js</file>
+    <file>dialogs/main/images/image-item.js</file>
     <file>dialogs/main/images/images-page.js</file>
+    <file>dialogs/main/images/image-detail.js</file>
     <file>dialogs/main/networks/networks-page.js</file>
     <file>dialogs/main/volumes/volumes-page.js</file>
     <file>dialogs/setup/setup-dialog.js</file>
@@ -23,7 +25,9 @@
     <file>docker/container/logs.js</file>
     <file>docker/container/monitor.js</file>
     <file>models/container-info.js</file>
+    <file>models/image-info.js</file>
     <file>utils/formatBytes.js</file>
     <file>utils/formatDate.js</file>
+    <file>utils/truncateId.js</file>
   </gresource>
 </gresources>

@@ -133,3 +133,67 @@ export interface DockerSystemDfResponse {
   Volumes: DockerVolumeUsage[];
   BuildCache: unknown[];
 }
+
+/**
+ * Docker Image from API response
+ */
+export interface DockerImage {
+  Id: string;
+  ParentId: string;
+  RepoTags: string[] | null;
+  RepoDigests: string[] | null;
+  Created: number;
+  Size: number;
+  SharedSize: number;
+  VirtualSize: number;
+  Labels: Record<string, string> | null;
+  Containers: number;
+}
+
+/**
+ * Processed image information for UI display
+ */
+export interface ImageData {
+  id: string;
+  shortId: string;
+  name: string;
+  tag: string;
+  repoTags: string[];
+  size: number;
+  created: number;
+  inUse: boolean;
+  containerCount: number;
+}
+
+/**
+ * Docker Image Inspect response from /images/{id}/json
+ */
+export interface DockerImageInspect {
+  Id: string;
+  RepoTags: string[] | null;
+  RepoDigests: string[] | null;
+  Parent: string;
+  Comment: string;
+  Created: string;
+  Container: string;
+  DockerVersion: string;
+  Author: string;
+  Architecture: string;
+  Os: string;
+  Size: number;
+  VirtualSize: number;
+  Config: {
+    Hostname: string;
+    Env: string[] | null;
+    Cmd: string[] | null;
+    Image: string;
+    WorkingDir: string;
+    Entrypoint: string[] | null;
+    Labels: Record<string, string> | null;
+    ExposedPorts?: Record<string, object> | null;
+  };
+  RootFS: {
+    Type: string;
+    Layers: string[];
+  };
+}
