@@ -19,9 +19,13 @@ import { truncateId } from '../utils/truncateId.js';
  */
 export class DockerClient {
   private connection: DockerConnection;
+  private textDecoder: TextDecoder;
+  private textEncoder: TextEncoder;
 
   constructor(socketPath: string) {
     this.connection = new DockerConnection(socketPath);
+    this.textDecoder = new TextDecoder();
+    this.textEncoder = new TextEncoder();
   }
 
   /**
@@ -241,7 +245,6 @@ export class DockerClient {
   private parseLogFrames(buffer: Uint8Array): string {
     let output = '';
     let offset = 0;
-    const decoder = new TextDecoder();
 
     while (offset < buffer.length) {
       // Check if we have enough bytes for header (8 bytes)
@@ -265,13 +268,13 @@ export class DockerClient {
       if (offset + size > buffer.length) {
         // Incomplete frame, take what we can
         const payload = buffer.subarray(offset);
-        output += decoder.decode(payload);
+        output += this.textDecoder.decode(payload);
         break;
       }
 
       // Read payload
       const payload = buffer.subarray(offset, offset + size);
-      output += decoder.decode(payload);
+      output += this.textDecoder.decode(payload);
 
       // Move past payload
       offset += size;
@@ -419,8 +422,7 @@ export class DockerClient {
     onLine: (line: string, stream: 'stdout' | 'stderr') => void,
     onRemaining: (remaining: Uint8Array<ArrayBuffer>) => void
   ): void {
-    const decoder = new TextDecoder();
-
+    // Multiplexed format (non-TTY container)
     // Detect if this is multiplexed format (non-TTY) or raw text (TTY)
     // Multiplexed format starts with stream type 0, 1, or 2
     // Raw text starts with actual text characters (>= 10 for newline, or >= 32 for printable)
@@ -429,7 +431,7 @@ export class DockerClient {
 
     if (!isMultiplexed) {
       // Raw text mode (TTY container) - just split on newlines
-      const text = decoder.decode(buffer);
+      const text = this.textDecoder.decode(buffer);
       const lines = text.split('\n');
 
       // Last element might be incomplete, keep it in buffer
@@ -443,7 +445,7 @@ export class DockerClient {
 
       // Return remaining as bytes
       onRemaining(
-        new TextEncoder().encode(remaining) as Uint8Array<ArrayBuffer>
+        this.textEncoder.encode(remaining) as Uint8Array<ArrayBuffer>
       );
       return;
     }
@@ -468,7 +470,7 @@ export class DockerClient {
       // Sanity check - if size is unreasonably large, assume format detection failed
       if (size > 1000000) {
         // Fallback to raw text
-        const text = decoder.decode(buffer.subarray(offset));
+        const text = this.textDecoder.decode(buffer.subarray(offset));
         const lines = text.split('\n');
         const remaining = lines.pop() ?? '';
 
@@ -479,7 +481,7 @@ export class DockerClient {
         }
 
         onRemaining(
-          new TextEncoder().encode(remaining) as Uint8Array<ArrayBuffer>
+          this.textEncoder.encode(remaining) as Uint8Array<ArrayBuffer>
         );
         return;
       }
@@ -491,7 +493,7 @@ export class DockerClient {
 
       // Extract and decode payload
       const payload = buffer.subarray(offset + 8, offset + 8 + size);
-      const line = decoder.decode(payload).replace(/\s+$/g, '');
+      const line = this.textDecoder.decode(payload).replace(/\s+$/g, '');
       const stream = streamType === 2 ? 'stderr' : 'stdout';
 
       if (line) {
@@ -528,7 +530,7 @@ export class DockerClient {
 
     return this.connection.requestStream('GET', path, {
       onData: (chunk) => {
-        buffer += new TextDecoder().decode(chunk);
+        buffer += this.textDecoder.decode(chunk);
 
         // Events are newline-delimited JSON
         const lines = buffer.split('\n');

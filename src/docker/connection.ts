@@ -37,10 +37,14 @@ export interface StreamCallbacks {
 export class DockerConnection {
   private socketPath: string;
   private socketClient: Gio.SocketClient;
+  private textDecoder: TextDecoder;
+  private textEncoder: TextEncoder;
 
   constructor(socketPath: string) {
     this.socketPath = socketPath;
     this.socketClient = new Gio.SocketClient();
+    this.textDecoder = new TextDecoder();
+    this.textEncoder = new TextEncoder();
   }
 
   /**
@@ -71,7 +75,7 @@ export class DockerConnection {
       const inputStream = connection.get_input_stream();
 
       // Build HTTP request
-      const contentLength = body ? new TextEncoder().encode(body).length : 0;
+      const contentLength = body ? this.textEncoder.encode(body).length : 0;
       const request = [
         `${method} ${path} HTTP/1.1`,
         `Host: localhost`,
@@ -86,18 +90,14 @@ export class DockerConnection {
         .filter((line) => line !== null)
         .join('\r\n');
 
-      // Send request
-      const requestBytes = new TextEncoder().encode(request);
+      const requestBytes = this.textEncoder.encode(request);
       await outputStream.write_bytes_async(
         new GLib.Bytes(requestBytes),
         GLib.PRIORITY_DEFAULT,
         null
       );
 
-      // Read response
-      const responseData = await this.readResponse(inputStream);
-
-      // Close connection
+      const responseData = this.readResponse(inputStream);
       connection.close(null);
 
       return responseData;
@@ -115,15 +115,13 @@ export class DockerConnection {
     body?: string
   ): Promise<string> {
     const bytes = await this.requestBinary(method, path, body);
-    return new TextDecoder().decode(bytes);
+    return this.textDecoder.decode(bytes);
   }
 
   /**
    * Read HTTP response from input stream
    */
-  private async readResponse(
-    inputStream: Gio.InputStream
-  ): Promise<Uint8Array> {
+  private readResponse(inputStream: Gio.InputStream): Uint8Array {
     try {
       const chunks: Uint8Array[] = [];
       const CHUNK_SIZE = 4096;
@@ -184,7 +182,7 @@ export class DockerConnection {
     const headerBytes = response.subarray(0, splitIndex);
     const bodyBytes = response.subarray(splitIndex + 4);
 
-    const headers = new TextDecoder().decode(headerBytes);
+    const headers = this.textDecoder.decode(headerBytes);
 
     // Check status code
     const statusLine = headers.split('\r\n')[0];
@@ -195,7 +193,7 @@ export class DockerConnection {
 
     const statusCode = parseInt(statusMatch[1], 10);
     if (statusCode < 200 || statusCode >= 300) {
-      const errorBody = new TextDecoder().decode(bodyBytes);
+      const errorBody = this.textDecoder.decode(bodyBytes);
       throw new Error(`HTTP error ${statusCode}: ${errorBody}`);
     }
 
@@ -230,7 +228,7 @@ export class DockerConnection {
 
       // Parse chunk size (hex)
       const sizeBytes = data.subarray(index, lineEnd);
-      const sizeHex = new TextDecoder().decode(sizeBytes);
+      const sizeHex = this.textDecoder.decode(sizeBytes);
       const size = parseInt(sizeHex, 16);
 
       if (isNaN(size)) {
@@ -308,7 +306,7 @@ export class DockerConnection {
       const inputStream = connection.get_input_stream();
 
       // Build HTTP request (keep-alive for streaming)
-      const contentLength = body ? new TextEncoder().encode(body).length : 0;
+      const contentLength = body ? this.textEncoder.encode(body).length : 0;
       const request = [
         `${method} ${path} HTTP/1.1`,
         `Host: localhost`,
@@ -323,7 +321,7 @@ export class DockerConnection {
         .join('\r\n');
 
       // Send request
-      const requestBytes = new TextEncoder().encode(request);
+      const requestBytes = this.textEncoder.encode(request);
       await outputStream.write_bytes_async(
         new GLib.Bytes(requestBytes),
         GLib.PRIORITY_DEFAULT,
@@ -427,7 +425,7 @@ export class DockerConnection {
 
       if (headerEnd !== -1) {
         const headerBytes = combined.subarray(0, headerEnd);
-        const headers = new TextDecoder().decode(headerBytes);
+        const headers = this.textDecoder.decode(headerBytes);
 
         // Validate status code
         const statusLine = headers.split('\r\n')[0];
@@ -503,7 +501,6 @@ export class DockerConnection {
     buffer: Uint8Array,
     onData: (data: Uint8Array) => void
   ): Uint8Array {
-    const decoder = new TextDecoder();
     let offset = 0;
 
     while (offset < buffer.length) {
@@ -522,7 +519,9 @@ export class DockerConnection {
       }
 
       // Parse chunk size (hex)
-      const sizeLine = decoder.decode(buffer.subarray(offset, crlfPos));
+      const sizeLine = this.textDecoder.decode(
+        buffer.subarray(offset, crlfPos)
+      );
       const chunkSize = parseInt(sizeLine.trim(), 16);
 
       if (isNaN(chunkSize)) {
