@@ -83,6 +83,11 @@ export class ContainerManager extends Adw.Window {
   private activeLogStream?: StreamHandle;
   private eventMonitorStream?: StreamHandle;
 
+  private startAction!: Gio.SimpleAction;
+  private stopAction!: Gio.SimpleAction;
+  private restartAction!: Gio.SimpleAction;
+  private deleteAction!: Gio.SimpleAction;
+
   static {
     // In development mode (npm start), load UI from filesystem
     // In production (flatpak), load from compiled resources
@@ -193,21 +198,21 @@ export class ContainerManager extends Adw.Window {
   private setupActions(): void {
     const actionGroup = Gio.SimpleActionGroup.new();
 
-    const startAction = Gio.SimpleAction.new('start', null);
-    startAction.connect('activate', () => void this.handleStart());
-    actionGroup.add_action(startAction);
+    this.startAction = Gio.SimpleAction.new('start', null);
+    this.startAction.connect('activate', () => void this.handleStart());
+    actionGroup.add_action(this.startAction);
 
-    const stopAction = Gio.SimpleAction.new('stop', null);
-    stopAction.connect('activate', () => this.handleStop());
-    actionGroup.add_action(stopAction);
+    this.stopAction = Gio.SimpleAction.new('stop', null);
+    this.stopAction.connect('activate', () => this.handleStop());
+    actionGroup.add_action(this.stopAction);
 
-    const restartAction = Gio.SimpleAction.new('restart', null);
-    restartAction.connect('activate', () => this.handleRestart());
-    actionGroup.add_action(restartAction);
+    this.restartAction = Gio.SimpleAction.new('restart', null);
+    this.restartAction.connect('activate', () => this.handleRestart());
+    actionGroup.add_action(this.restartAction);
 
-    const deleteAction = Gio.SimpleAction.new('delete', null);
-    deleteAction.connect('activate', () => this.handleDelete());
-    actionGroup.add_action(deleteAction);
+    this.deleteAction = Gio.SimpleAction.new('delete', null);
+    this.deleteAction.connect('activate', () => this.handleDelete());
+    actionGroup.add_action(this.deleteAction);
 
     const copyLogsAction = Gio.SimpleAction.new('copy-logs', null);
     copyLogsAction.connect('activate', () => this.copyLogs());
@@ -229,9 +234,11 @@ export class ContainerManager extends Adw.Window {
     const currentTab = this._contentStack.get_visible_child_name();
 
     try {
-      if (currentTab === 'summary') {
-        await this.loadSummary();
-      } else if (currentTab === 'network') {
+      // Always load summary to get current status and update actions
+      await this.loadSummary();
+      this.updateActionState();
+
+      if (currentTab === 'network') {
         await this.loadNetwork();
       } else if (currentTab === 'disk') {
         await this.loadDiskUsage();
@@ -259,7 +266,11 @@ export class ContainerManager extends Adw.Window {
    * Updates name, image, status, ID, command, and creation time rows.
    */
   private async loadSummary(): Promise<void> {
-    const summary = await getSummaryData(this.dockerClient, this.containerId);
+    this.containerSummary = await getSummaryData(
+      this.dockerClient,
+      this.containerId
+    );
+    const summary = this.containerSummary;
 
     this._nameRow.set_subtitle(summary.name);
     this._imageRow.set_subtitle(summary.image);
@@ -678,11 +689,9 @@ export class ContainerManager extends Adw.Window {
       this.eventMonitorStream = await monitorContainerEvents(
         this.dockerClient,
         this.containerId,
-        (state, _event) => {
-          // Refresh data on any event
+        (state) => {
           void this.loadData();
 
-          // If container started and live logs are enabled, reconnect
           if (state === 'start' && this._liveLogToggle.get_active()) {
             void this.enableLiveLogs();
           }
@@ -704,5 +713,30 @@ export class ContainerManager extends Adw.Window {
     this._actionSpinner.set_visible(busy);
     this._actionSpinner.set_spinning(busy);
     this._actionsMenuButton.set_visible(!busy);
+  }
+  /**
+   * Updates the enabled state of actions based on container status.
+   */
+  private updateActionState(): void {
+    if (!this.containerSummary) {
+      return;
+    }
+
+    const { status } = this.containerSummary;
+    const isRunning = status === 'running';
+    const isPaused = status === 'paused';
+    const isRestarting = status === 'restarting';
+
+    // Start: Enabled if not running, not restarting.
+    this.startAction.set_enabled(!isRunning && !isRestarting);
+
+    // Stop: Enabled if running, paused or restarting.
+    this.stopAction.set_enabled(isRunning || isPaused || isRestarting);
+
+    // Restart: Enabled if running.
+    this.restartAction.set_enabled(isRunning);
+
+    // Delete: Enabled unless removing.
+    this.deleteAction.set_enabled(status !== 'removing');
   }
 }
