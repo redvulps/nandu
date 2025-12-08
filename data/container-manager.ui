@@ -390,6 +390,15 @@
                             <property name="spacing">6</property>
                             <property name="valign">start</property>
                             <child>
+                              <object class="GtkToggleButton" id="liveLogToggle">
+                                <property name="label">Live</property>
+                                <property name="tooltip-text">Stream logs in real-time</property>
+                                <style>
+                                  <class name="osd"/>
+                                </style>
+                              </object>
+                            </child>
+                            <child>
                               <object class="GtkMenuButton" id="logMenuButton">
                                 <property name="icon-name">view-more-symbolic</property>
                                 <property name="menu-model">log_menu</property>

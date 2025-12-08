@@ -20,8 +20,12 @@ import {
   ContainerDiskUsage,
   getDiskUsageData,
 } from '../../../docker/container/disk-usage.js';
-import { getContainerLogs } from '../../../docker/container/logs.js';
-import { monitorUntilStartedOrExited } from '../../../docker/container/monitor.js';
+import {
+  getContainerLogs,
+  streamContainerLogs,
+} from '../../../docker/container/logs.js';
+import { monitorContainerEvents } from '../../../docker/container/monitor.js';
+import type { StreamHandle } from '../../../docker/connection.js';
 
 /**
  * A window class that manages and displays detailed information about a Docker container.
@@ -65,6 +69,7 @@ export class ContainerManager extends Adw.Window {
   // Log Tab
   private _logView!: Gtk.TextView;
   private _refreshLogButton!: Gtk.Button;
+  private _liveLogToggle!: Gtk.ToggleButton;
 
   private dockerClient: DockerClient;
   private containerId: string;
@@ -75,7 +80,8 @@ export class ContainerManager extends Adw.Window {
   private containerLogs?: string;
   private containerDeleted = false;
   private onDeleted?: () => void;
-  private isMonitoring = false;
+  private activeLogStream?: StreamHandle;
+  private eventMonitorStream?: StreamHandle;
 
   static {
     // In development mode (npm start), load UI from filesystem
@@ -118,6 +124,7 @@ export class ContainerManager extends Adw.Window {
           'mountsStack',
           'logView',
           'refreshLogButton',
+          'liveLogToggle',
         ],
       },
       this
@@ -167,7 +174,16 @@ export class ContainerManager extends Adw.Window {
 
     this._refreshLogButton.connect('clicked', () => void this.loadLogs());
 
+    this._liveLogToggle.connect('toggled', () => {
+      if (this._liveLogToggle.get_active()) {
+        void this.enableLiveLogs();
+      } else {
+        this.disableLiveLogs();
+      }
+    });
+
     this.setupActions();
+    void this.startEventMonitoring();
   }
 
   /**
@@ -251,6 +267,15 @@ export class ContainerManager extends Adw.Window {
     this._idRow.set_subtitle(summary.id);
     this._commandRow.set_subtitle(summary.command);
     this._createdRow.set_subtitle(summary.created);
+  }
+
+  /**
+   * Handle close request - cleanup any active streams
+   */
+  vfunc_close_request(): boolean {
+    this.disableLiveLogs();
+    this.eventMonitorStream?.cancel();
+    return super.vfunc_close_request();
   }
 
   /**
@@ -355,6 +380,11 @@ export class ContainerManager extends Adw.Window {
    * Disables the refresh button while loading.
    */
   private async loadLogs(): Promise<void> {
+    // If live logs are active, don't load snapshot
+    if (this._liveLogToggle.get_active()) {
+      return;
+    }
+
     this._refreshLogButton.set_sensitive(false);
     try {
       const logs = await getContainerLogs(this.dockerClient, this.containerId);
@@ -362,6 +392,54 @@ export class ContainerManager extends Adw.Window {
     } finally {
       this._refreshLogButton.set_sensitive(true);
     }
+  }
+
+  /**
+   * Enables live log streaming.
+   */
+  private async enableLiveLogs(): Promise<void> {
+    // Disable refresh while streaming
+    this._refreshLogButton.set_sensitive(false);
+
+    // Clear existing logs before streaming
+    this._logView.get_buffer().set_text('', 0);
+
+    try {
+      this.activeLogStream = await streamContainerLogs(
+        this.dockerClient,
+        this.containerId,
+        (line) => {
+          const buffer = this._logView.get_buffer();
+          const endIter = buffer.get_end_iter();
+          buffer.insert(endIter, line + '\n', -1);
+        },
+        (error) => {
+          console.error(`Live log error: ${String(error)}`);
+          this._liveLogToggle.set_active(false);
+          this.activeLogStream = undefined;
+        },
+        () => {
+          // Stream closed (e.g. container stopped)
+          // We keep the toggle active so it reconnects on next start
+          this.activeLogStream = undefined;
+          this._refreshLogButton.set_sensitive(true);
+        }
+      );
+    } catch (error) {
+      console.error(`Failed to start live logs: ${String(error)}`);
+      this._liveLogToggle.set_active(false);
+    }
+  }
+
+  /**
+   * Disables live log streaming.
+   */
+  private disableLiveLogs(): void {
+    if (this.activeLogStream) {
+      this.activeLogStream.cancel();
+      this.activeLogStream = undefined;
+    }
+    this._refreshLogButton.set_sensitive(true);
   }
 
   /**
@@ -426,11 +504,13 @@ export class ContainerManager extends Adw.Window {
    * Shows an error dialog if the operation fails.
    */
   private async handleStart(): Promise<void> {
+    this.setBusy(true);
     try {
       await this.dockerClient.startContainer(this.containerId);
-      void this.startMonitoring();
     } catch (error) {
       this.showErrorDialog('Failed to Start Container', String(error));
+    } finally {
+      this.setBusy(false);
     }
   }
 
@@ -465,11 +545,13 @@ export class ContainerManager extends Adw.Window {
    * Shows an error dialog if the operation fails.
    */
   private async executeStop(): Promise<void> {
+    this.setBusy(true);
     try {
       await this.dockerClient.stopContainer(this.containerId);
-      void this.startMonitoring();
     } catch (error) {
       this.showErrorDialog('Failed to Stop Container', String(error));
+    } finally {
+      this.setBusy(false);
     }
   }
 
@@ -507,11 +589,13 @@ export class ContainerManager extends Adw.Window {
    * Shows an error dialog if the operation fails.
    */
   private async executeRestart(): Promise<void> {
+    this.setBusy(true);
     try {
       await this.dockerClient.restartContainer(this.containerId);
-      void this.startMonitoring();
     } catch (error) {
       this.showErrorDialog('Failed to Restart Container', String(error));
+    } finally {
+      this.setBusy(false);
     }
   }
 
@@ -550,6 +634,7 @@ export class ContainerManager extends Adw.Window {
    * Shows an error dialog if the operation fails.
    */
   private async executeDelete(): Promise<void> {
+    this.setBusy(true);
     try {
       // Force delete to handle running containers
       await this.dockerClient.removeContainer(this.containerId, true);
@@ -559,6 +644,7 @@ export class ContainerManager extends Adw.Window {
       }
       this.close();
     } catch (error) {
+      this.setBusy(false);
       this.showErrorDialog('Failed to Delete Container', String(error));
     }
   }
@@ -581,43 +667,42 @@ export class ContainerManager extends Adw.Window {
   }
 
   /**
-   * Starts monitoring the container's state.
-   * Shows a spinner and hides the action menu while monitoring.
-   * Updates the status row as the state changes.
-   * Refreshes data once the container starts or exits.
+   * Starts monitoring container events for real-time updates.
    */
-  private async startMonitoring(): Promise<void> {
-    if (this.isMonitoring) {
+  private async startEventMonitoring(): Promise<void> {
+    if (this.eventMonitorStream) {
       return;
     }
 
-    this.isMonitoring = true;
-
-    // Show spinner, hide menu button
-    this._actionSpinner.set_visible(true);
-    this._actionSpinner.set_spinning(true);
-    this._actionsMenuButton.set_visible(false);
-
     try {
-      await monitorUntilStartedOrExited(
+      this.eventMonitorStream = await monitorContainerEvents(
         this.dockerClient,
         this.containerId,
-        (status) => {
-          this._statusRow.set_subtitle(status);
+        (state, _event) => {
+          // Refresh data on any event
+          void this.loadData();
+
+          // If container started and live logs are enabled, reconnect
+          if (state === 'start' && this._liveLogToggle.get_active()) {
+            void this.enableLiveLogs();
+          }
+        },
+        (error) => {
+          console.error(`Event monitoring error: ${String(error)}`);
         }
       );
-
-      await this.loadData();
     } catch (error) {
-      console.error(`Monitoring error: ${String(error)}`);
-      await this.loadData();
-    } finally {
-      this.isMonitoring = false;
-
-      // Hide spinner, show menu button
-      this._actionSpinner.set_spinning(false);
-      this._actionSpinner.set_visible(false);
-      this._actionsMenuButton.set_visible(true);
+      console.error(`Failed to start event monitoring: ${String(error)}`);
     }
+  }
+
+  /**
+   * Sets the busy state of the window.
+   * Shows a spinner and hides the action menu when busy.
+   */
+  private setBusy(busy: boolean): void {
+    this._actionSpinner.set_visible(busy);
+    this._actionSpinner.set_spinning(busy);
+    this._actionsMenuButton.set_visible(!busy);
   }
 }
