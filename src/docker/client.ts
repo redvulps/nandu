@@ -1,4 +1,4 @@
-import { DockerConnection } from './connection.js';
+import { DockerConnection, StreamHandle } from './connection.js';
 import type {
   DockerContainer,
   DockerContainerInspect,
@@ -8,6 +8,7 @@ import type {
   DockerImage,
   DockerImageInspect,
   ImageData,
+  DockerEvent,
 } from './types.js';
 import { truncateId } from '../utils/truncateId.js';
 
@@ -36,7 +37,7 @@ export class DockerClient {
       const containers: DockerContainer[] = JSON.parse(response);
       return containers.map((container) => this.processContainer(container));
     } catch (error) {
-      throw new Error(`Failed to list containers: ${error}`);
+      throw new Error(`Failed to list containers: ${String(error)}`);
     }
   }
 
@@ -55,9 +56,10 @@ export class DockerClient {
         'GET',
         `/containers/${id}/json?size=${size}`
       );
-      return JSON.parse(response);
+
+      return JSON.parse(response) as DockerContainerInspect;
     } catch (error) {
-      throw new Error(`Failed to inspect container ${id}: ${error}`);
+      throw new Error(`Failed to inspect container ${id}: ${String(error)}`);
     }
   }
 
@@ -69,7 +71,7 @@ export class DockerClient {
     try {
       await this.connection.request('POST', `/containers/${id}/start`);
     } catch (error) {
-      throw new Error(`Failed to start container ${id}: ${error}`);
+      throw new Error(`Failed to start container ${id}: ${String(error)}`);
     }
   }
 
@@ -81,7 +83,7 @@ export class DockerClient {
     try {
       await this.connection.request('POST', `/containers/${id}/stop`);
     } catch (error) {
-      throw new Error(`Failed to stop container ${id}: ${error}`);
+      throw new Error(`Failed to stop container ${id}: ${String(error)}`);
     }
   }
 
@@ -93,7 +95,7 @@ export class DockerClient {
     try {
       await this.connection.request('POST', `/containers/${id}/restart`);
     } catch (error) {
-      throw new Error(`Failed to restart container ${id}: ${error}`);
+      throw new Error(`Failed to restart container ${id}: ${String(error)}`);
     }
   }
 
@@ -107,7 +109,7 @@ export class DockerClient {
       const query = force ? '?force=true' : '';
       await this.connection.request('DELETE', `/containers/${id}${query}`);
     } catch (error) {
-      throw new Error(`Failed to remove container ${id}: ${error}`);
+      throw new Error(`Failed to remove container ${id}: ${String(error)}`);
     }
   }
 
@@ -125,7 +127,9 @@ export class DockerClient {
       );
       return this.parseLogFrames(response);
     } catch (error) {
-      throw new Error(`Failed to get logs for container ${id}: ${error}`);
+      throw new Error(
+        `Failed to get logs for container ${id}: ${String(error)}`
+      );
     }
   }
 
@@ -136,9 +140,10 @@ export class DockerClient {
   public async getSystemDataUsage(): Promise<DockerSystemDfResponse> {
     try {
       const response = await this.connection.request('GET', '/system/df');
-      return JSON.parse(response);
+
+      return JSON.parse(response) as DockerSystemDfResponse;
     } catch (error) {
-      throw new Error(`Failed to get system data usage: ${error}`);
+      throw new Error(`Failed to get system data usage: ${String(error)}`);
     }
   }
 
@@ -152,7 +157,7 @@ export class DockerClient {
       const images: DockerImage[] = JSON.parse(response);
       return images.map((image) => this.processImage(image));
     } catch (error) {
-      throw new Error(`Failed to list images: ${error}`);
+      throw new Error(`Failed to list images: ${String(error)}`);
     }
   }
 
@@ -166,7 +171,7 @@ export class DockerClient {
       const query = force ? '?force=true' : '';
       await this.connection.request('DELETE', `/images/${id}${query}`);
     } catch (error) {
-      throw new Error(`Failed to remove image ${id}: ${error}`);
+      throw new Error(`Failed to remove image ${id}: ${String(error)}`);
     }
   }
 
@@ -181,9 +186,10 @@ export class DockerClient {
         'GET',
         `/images/${id}/json`
       );
-      return JSON.parse(response);
+
+      return JSON.parse(response) as DockerImageInspect;
     } catch (error) {
-      throw new Error(`Failed to inspect image ${id}: ${error}`);
+      throw new Error(`Failed to inspect image ${id}: ${String(error)}`);
     }
   }
 
@@ -364,6 +370,183 @@ export class DockerClient {
         return `${port.PublicPort}:${port.PrivatePort}/${port.Type}`;
       }
       return `${port.PrivatePort}/${port.Type}`;
+    });
+  }
+
+  /**
+   * Stream container logs in real-time with follow=true.
+   * Returns a StreamHandle for cancellation.
+   */
+  public async streamContainerLogs(
+    id: string,
+    callbacks: {
+      onLine: (line: string, stream: 'stdout' | 'stderr') => void;
+      onError?: (error: Error) => void;
+      onClose?: () => void;
+    },
+    options: { tail?: number; since?: number } = {}
+  ): Promise<StreamHandle> {
+    const tail = options.tail ?? 100;
+    const since = options.since ?? 0;
+    const path = `/containers/${id}/logs?stdout=true&stderr=true&follow=true&tail=${tail}&since=${since}`;
+
+    let buffer = new Uint8Array(0);
+
+    return this.connection.requestStream('GET', path, {
+      onData: (chunk) => {
+        // Append to buffer
+        const newBuffer = new Uint8Array(buffer.length + chunk.length);
+        newBuffer.set(buffer);
+        newBuffer.set(chunk, buffer.length);
+        buffer = newBuffer;
+
+        // Parse log frames
+        this.parseStreamingLogFrames(buffer, callbacks.onLine, (remaining) => {
+          buffer = remaining;
+        });
+      },
+      onError: callbacks.onError,
+      onClose: callbacks.onClose,
+    });
+  }
+
+  /**
+   * Parse Docker log frames from streaming buffer.
+   * Calls onLine for each complete line, and onRemaining with leftover bytes.
+   */
+  private parseStreamingLogFrames(
+    buffer: Uint8Array<ArrayBuffer>,
+    onLine: (line: string, stream: 'stdout' | 'stderr') => void,
+    onRemaining: (remaining: Uint8Array<ArrayBuffer>) => void
+  ): void {
+    const decoder = new TextDecoder();
+
+    // Detect if this is multiplexed format (non-TTY) or raw text (TTY)
+    // Multiplexed format starts with stream type 0, 1, or 2
+    // Raw text starts with actual text characters (>= 10 for newline, or >= 32 for printable)
+    const firstByte = buffer[0];
+    const isMultiplexed = firstByte === 0 || firstByte === 1 || firstByte === 2;
+
+    if (!isMultiplexed) {
+      // Raw text mode (TTY container) - just split on newlines
+      const text = decoder.decode(buffer);
+      const lines = text.split('\n');
+
+      // Last element might be incomplete, keep it in buffer
+      const remaining = lines.pop() ?? '';
+
+      for (const line of lines) {
+        if (line) {
+          onLine(line, 'stdout');
+        }
+      }
+
+      // Return remaining as bytes
+      onRemaining(
+        new TextEncoder().encode(remaining) as Uint8Array<ArrayBuffer>
+      );
+      return;
+    }
+
+    // Multiplexed format (non-TTY container)
+    let offset = 0;
+
+    while (offset < buffer.length) {
+      // Need at least 8 bytes for header
+      if (offset + 8 > buffer.length) {
+        break;
+      }
+
+      // Read header: [STREAM_TYPE][0 0 0][SIZE (4 bytes BE)]
+      const streamType = buffer[offset]; // 0=stdin, 1=stdout, 2=stderr
+      const size =
+        (buffer[offset + 4] << 24) |
+        (buffer[offset + 5] << 16) |
+        (buffer[offset + 6] << 8) |
+        buffer[offset + 7];
+
+      // Sanity check - if size is unreasonably large, assume format detection failed
+      if (size > 1000000) {
+        // Fallback to raw text
+        const text = decoder.decode(buffer.subarray(offset));
+        const lines = text.split('\n');
+        const remaining = lines.pop() ?? '';
+
+        for (const line of lines) {
+          if (line) {
+            onLine(line, 'stdout');
+          }
+        }
+
+        onRemaining(
+          new TextEncoder().encode(remaining) as Uint8Array<ArrayBuffer>
+        );
+        return;
+      }
+
+      // Check if we have complete payload
+      if (offset + 8 + size > buffer.length) {
+        break;
+      }
+
+      // Extract and decode payload
+      const payload = buffer.subarray(offset + 8, offset + 8 + size);
+      const line = decoder.decode(payload).replace(/\s+$/g, '');
+      const stream = streamType === 2 ? 'stderr' : 'stdout';
+
+      if (line) {
+        onLine(line, stream);
+      }
+
+      offset += 8 + size;
+    }
+
+    // Return remaining bytes
+    onRemaining(buffer.subarray(offset));
+  }
+
+  /**
+   * Stream Docker events in real-time.
+   * Returns a StreamHandle for cancellation.
+   */
+  public async streamEvents(
+    callbacks: {
+      onEvent: (event: DockerEvent) => void;
+      onError?: (error: Error) => void;
+      onClose?: () => void;
+    },
+    filters?: Record<string, string[]>
+  ): Promise<StreamHandle> {
+    let path = '/events';
+
+    if (filters) {
+      const encodedFilters = encodeURIComponent(JSON.stringify(filters));
+      path += `?filters=${encodedFilters}`;
+    }
+
+    let buffer = '';
+
+    return this.connection.requestStream('GET', path, {
+      onData: (chunk) => {
+        buffer += new TextDecoder().decode(chunk);
+
+        // Events are newline-delimited JSON
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? ''; // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (line.trim()) {
+            try {
+              const event = JSON.parse(line) as DockerEvent;
+              callbacks.onEvent(event);
+            } catch {
+              // Skip malformed JSON
+            }
+          }
+        }
+      },
+      onError: callbacks.onError,
+      onClose: callbacks.onClose,
     });
   }
 }

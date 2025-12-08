@@ -197,3 +197,27 @@ export interface DockerImageInspect {
     Layers: string[];
   };
 }
+
+/**
+ * Docker event from /events stream
+ */
+export interface DockerEvent {
+  Type:
+    | 'container'
+    | 'image'
+    | 'volume'
+    | 'network'
+    | 'daemon'
+    | 'plugin'
+    | 'node'
+    | 'service'
+    | 'secret'
+    | 'config';
+  Action: string;
+  Actor: {
+    ID: string;
+    Attributes: Record<string, string>;
+  };
+  time: number;
+  timeNano: number;
+}

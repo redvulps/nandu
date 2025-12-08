@@ -7,6 +7,28 @@ Gio._promisify(
   'write_bytes_async',
   'write_bytes_finish'
 );
+Gio._promisify(
+  Gio.InputStream.prototype,
+  'read_bytes_async',
+  'read_bytes_finish'
+);
+
+/**
+ * Handle for an active stream, allowing cancellation
+ */
+export interface StreamHandle {
+  cancel: () => void;
+  isCancelled: () => boolean;
+}
+
+/**
+ * Callbacks for streaming responses
+ */
+export interface StreamCallbacks {
+  onData: (data: Uint8Array) => void;
+  onError?: (error: Error) => void;
+  onClose?: () => void;
+}
 
 /**
  * DockerConnection handles low-level communication with the Docker daemon
@@ -80,7 +102,7 @@ export class DockerConnection {
 
       return responseData;
     } catch (error) {
-      throw new Error(`Docker API request failed: ${error}`);
+      throw new Error(`Docker API request failed: ${String(error)}`);
     }
   }
 
@@ -132,7 +154,7 @@ export class DockerConnection {
 
       return this.parseHttpResponseBytes(fullResponse);
     } catch (error) {
-      throw new Error(`Failed to read response: ${error}`);
+      throw new Error(`Failed to read response: ${String(error)}`);
     }
   }
 
@@ -260,10 +282,310 @@ export class DockerConnection {
     }
   }
 
-  /**
-   * Update the socket path
-   */
   public setSocketPath(path: string): void {
     this.socketPath = path;
+  }
+
+  /**
+   * Make a streaming HTTP request to the Docker API.
+   * The connection stays open and data is passed to callbacks as it arrives.
+   * Use the returned StreamHandle to cancel the stream when done.
+   */
+  public async requestStream(
+    method: string,
+    path: string,
+    callbacks: StreamCallbacks,
+    body?: string
+  ): Promise<StreamHandle> {
+    const cancellable = new Gio.Cancellable();
+    let isCancelled = false;
+
+    try {
+      const address = Gio.UnixSocketAddress.new(this.socketPath);
+      const connection = await this.socketClient.connect_async(address, null);
+
+      const outputStream = connection.get_output_stream();
+      const inputStream = connection.get_input_stream();
+
+      // Build HTTP request (keep-alive for streaming)
+      const contentLength = body ? new TextEncoder().encode(body).length : 0;
+      const request = [
+        `${method} ${path} HTTP/1.1`,
+        `Host: localhost`,
+        `User-Agent: Nandu/0.1`,
+        `Accept: application/json`,
+        contentLength > 0 ? `Content-Type: application/json` : null,
+        contentLength > 0 ? `Content-Length: ${contentLength}` : null,
+        ``, // No Connection: close for streaming
+        body || '',
+      ]
+        .filter((line) => line !== null)
+        .join('\r\n');
+
+      // Send request
+      const requestBytes = new TextEncoder().encode(request);
+      await outputStream.write_bytes_async(
+        new GLib.Bytes(requestBytes),
+        GLib.PRIORITY_DEFAULT,
+        null
+      );
+
+      // Read and validate HTTP headers first
+      const headerResult = this.readStreamHeaders(inputStream);
+      if (!headerResult.success) {
+        throw new Error(headerResult.error);
+      }
+
+      // Create decoder for chunked encoding if needed
+      let processData: (data: Uint8Array) => void;
+      if (headerResult.isChunked) {
+        let chunkBuffer = new Uint8Array(0);
+
+        processData = (data: Uint8Array) => {
+          // Append to chunk buffer
+          const newBuffer = new Uint8Array(chunkBuffer.length + data.length);
+          newBuffer.set(chunkBuffer);
+          newBuffer.set(data, chunkBuffer.length);
+          chunkBuffer = newBuffer;
+
+          // Process complete chunks
+          chunkBuffer = this.processChunkedData(
+            chunkBuffer,
+            callbacks.onData
+          ) as Uint8Array<ArrayBuffer>;
+        };
+      } else {
+        processData = callbacks.onData;
+      }
+
+      // Process any data that came with the headers (initial log lines)
+      if (headerResult.remainingData && headerResult.remainingData.length > 0) {
+        processData(headerResult.remainingData);
+      }
+
+      // Start async reading loop with chunked decoding
+      void this.readStreamLoop(
+        inputStream,
+        { ...callbacks, onData: processData },
+        cancellable
+      );
+
+      return {
+        cancel: () => {
+          if (!isCancelled) {
+            isCancelled = true;
+            cancellable.cancel();
+            try {
+              connection.close(null);
+            } catch {
+              // Connection might already be closed
+            }
+            callbacks.onClose?.();
+          }
+        },
+        isCancelled: () => isCancelled,
+      };
+    } catch (error) {
+      callbacks.onError?.(
+        error instanceof Error ? error : new Error(String(error))
+      );
+      callbacks.onClose?.();
+      throw error;
+    }
+  }
+
+  /**
+   * Read HTTP headers from a stream and validate status code
+   */
+  private readStreamHeaders(inputStream: Gio.InputStream): {
+    success: boolean;
+    error?: string;
+    remainingData?: Uint8Array;
+    isChunked?: boolean;
+  } {
+    const CHUNK_SIZE = 4096;
+    const chunks: Uint8Array[] = [];
+
+    // Read until we find the header terminator
+    while (true) {
+      const bytes = inputStream.read_bytes(CHUNK_SIZE, null);
+      if (bytes.get_size() === 0) {
+        return {
+          success: false,
+          error: 'Connection closed before headers received',
+        };
+      }
+
+      const data = bytes.get_data();
+      if (data) {
+        chunks.push(new Uint8Array(data));
+      }
+
+      // Check if we have the header terminator
+      const combined = this.combineChunks(chunks);
+      const headerEnd = this.findHeaderEnd(combined);
+
+      if (headerEnd !== -1) {
+        const headerBytes = combined.subarray(0, headerEnd);
+        const headers = new TextDecoder().decode(headerBytes);
+
+        // Validate status code
+        const statusLine = headers.split('\r\n')[0];
+        const statusMatch = statusLine.match(/HTTP\/\d\.\d (\d+)/);
+        if (!statusMatch) {
+          return { success: false, error: 'Invalid HTTP status line' };
+        }
+
+        const statusCode = parseInt(statusMatch[1], 10);
+        if (statusCode < 200 || statusCode >= 300) {
+          return { success: false, error: `HTTP error ${statusCode}` };
+        }
+
+        // Check for chunked transfer encoding
+        const isChunked = headers
+          .toLowerCase()
+          .includes('transfer-encoding: chunked');
+
+        // Return any data that came after the headers
+        const remainingData = combined.subarray(headerEnd + 4); // +4 for \r\n\r\n
+        return { success: true, remainingData, isChunked };
+      }
+    }
+  }
+
+  /**
+   * Async loop to read stream data and call callbacks.
+   * Uses async I/O to avoid blocking the GLib main loop.
+   */
+  private async readStreamLoop(
+    inputStream: Gio.InputStream,
+    callbacks: StreamCallbacks,
+    cancellable: Gio.Cancellable
+  ): Promise<void> {
+    const CHUNK_SIZE = 4096;
+
+    try {
+      while (!cancellable.is_cancelled()) {
+        const bytes = await inputStream.read_bytes_async(
+          CHUNK_SIZE,
+          GLib.PRIORITY_DEFAULT,
+          cancellable
+        );
+
+        if (bytes.get_size() === 0) {
+          // Stream ended
+          break;
+        }
+
+        const data = bytes.get_data();
+        if (data) {
+          callbacks.onData(new Uint8Array(data));
+        }
+      }
+    } catch (error) {
+      if (!cancellable.is_cancelled()) {
+        callbacks.onError?.(
+          error instanceof Error ? error : new Error(String(error))
+        );
+      }
+    } finally {
+      if (!cancellable.is_cancelled()) {
+        callbacks.onClose?.();
+      }
+    }
+  }
+
+  /**
+   * Process chunked transfer encoding data.
+   * Returns remaining unprocessed bytes.
+   */
+  private processChunkedData(
+    buffer: Uint8Array,
+    onData: (data: Uint8Array) => void
+  ): Uint8Array {
+    const decoder = new TextDecoder();
+    let offset = 0;
+
+    while (offset < buffer.length) {
+      // Find the end of the chunk size line (CRLF)
+      let crlfPos = -1;
+      for (let i = offset; i < buffer.length - 1; i++) {
+        if (buffer[i] === 0x0d && buffer[i + 1] === 0x0a) {
+          crlfPos = i;
+          break;
+        }
+      }
+
+      if (crlfPos === -1) {
+        // Haven't received complete chunk size line yet
+        break;
+      }
+
+      // Parse chunk size (hex)
+      const sizeLine = decoder.decode(buffer.subarray(offset, crlfPos));
+      const chunkSize = parseInt(sizeLine.trim(), 16);
+
+      if (isNaN(chunkSize)) {
+        // Invalid chunk size - might be corrupted, skip
+        offset = crlfPos + 2;
+        continue;
+      }
+
+      if (chunkSize === 0) {
+        // End of chunked data
+        offset = buffer.length;
+        break;
+      }
+
+      // Check if we have the complete chunk data (size + \r\n + data + \r\n)
+      const dataStart = crlfPos + 2;
+      const dataEnd = dataStart + chunkSize;
+
+      if (dataEnd + 2 > buffer.length) {
+        // Haven't received complete chunk yet
+        break;
+      }
+
+      // Extract chunk data and pass to callback
+      const chunkData = buffer.subarray(dataStart, dataEnd);
+      onData(new Uint8Array(chunkData));
+
+      // Move past chunk data and trailing \r\n
+      offset = dataEnd + 2;
+    }
+
+    // Return remaining unprocessed data
+    return buffer.subarray(offset);
+  }
+
+  /**
+   * Find the end of HTTP headers (double CRLF)
+   */
+  private findHeaderEnd(data: Uint8Array): number {
+    for (let i = 0; i < data.length - 3; i++) {
+      if (
+        data[i] === 13 &&
+        data[i + 1] === 10 &&
+        data[i + 2] === 13 &&
+        data[i + 3] === 10
+      ) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * Combine multiple Uint8Array chunks into one
+   */
+  private combineChunks(chunks: Uint8Array[]): Uint8Array {
+    const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+    const result = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of chunks) {
+      result.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return result;
   }
 }
